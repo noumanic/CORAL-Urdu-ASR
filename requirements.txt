@@ -1,0 +1,10 @@
+torch
+transformers
+librosa
+soundfile
+numpy
+pandas
+matplotlib
+seaborn
+editdistance
+tqdm

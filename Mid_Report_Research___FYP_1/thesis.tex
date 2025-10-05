@@ -1,0 +1,61 @@
+\documentclass{fast-nuces-bs}
+%\documentclass{article}
+
+\usepackage{blindtext}
+\usepackage{mathptmx}% Times Roman font
+\usepackage[T1]{fontenc}
+\usepackage{lipsum} 
+\usepackage{sectsty}
+\usepackage{tikz-uml}
+\usepackage{titlesec}
+
+% Information about the Thesis 
+% -----------------------------------------------------------------------------
+% (All are compulsory, do not delete any line other than author Information)
+% For e.g., usually there are 3 students in a group, so leave authorone, 
+% authortwo, and authorthree, and delete authorfour.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\department{Department of Computer Science}
+\faculty{Computer Science}
+\degreeyear{2022}
+\degreemonth{June}
+\degreename{Computer Science}
+\campuscity{Islamabad}
+\authorone{Student 1}{19I-1234}
+\authortwo{Student 2}{19I-1234}
+\authorthree{Student 3}{19I-1234}
+\supervisor{Mr./ Ms./ Dr. Supervisor Name}
+\sessionduration{2018-2022}
+\cosupervisor{Mr./ Ms./ Dr. Supervisor Name}
+\deanname{Dr. Dean Computing}
+\directorname{Dr. Director of the Campus}
+\hodname{Dr. Head of Computer Science Department}
+\fypcoordinatorname{Name of FYP Coordinator}
+\title{Title of the Project here}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Former document starts below this
+\begin{document}
+
+%\begin{acknowledgements}
+%	Your acknowledgments here
+%\end{acknowledgements}
+
+%\begin{abstract}
+%Briefly state the (1) research problem, (2) methodology, (3) key results, and (4) conclusion. Generally, abstracts are between 150 and 200 words–roughly 10-15 sentences.
+%\end{abstract}
+
+\include{sections/chapter1}
+\include{sections/chapter2}
+\include{sections/chapter3}
+
+
+%\appendix
+%\include{appendix1/appendix1}
+
+\bibliographystyle{plain}
+\bibliography{bib} 
+\addcontentsline{toc}{chapter}{References} 
+
+\end{document}
