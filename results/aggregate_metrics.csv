@@ -1,0 +1,7 @@
+,wer,wer,wer,wer,cer,cer,avg_confidence,avg_confidence,ece,ece,duration
+,mean,std,min,max,mean,std,mean,std,mean,std,sum
+model_name,,,,,,,,,,,
+wav2vec2-urdu,0.5421,0.1398,0.375,0.7778,0.1947,0.0845,0.9781,0.007,0.5252,0.1784,0.0
+whisper-large,0.1776,0.059,0.0909,0.2727,0.0461,0.0247,0.9211,0.0638,0.1138,0.0493,0.0
+whisper-medium,0.4011,0.2499,0.1667,1.0,0.2105,0.2465,0.7747,0.099,0.2797,0.2399,0.0
+whisper-small,0.4902,0.2011,0.1,0.8333,0.2087,0.1148,0.7124,0.1443,0.3096,0.2256,0.0
