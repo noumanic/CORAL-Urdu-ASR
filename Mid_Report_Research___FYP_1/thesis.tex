@@ -1,61 +1,65 @@
 \documentclass{fast-nuces-bs}
-%\documentclass{article}
 
 \usepackage{blindtext}
-\usepackage{mathptmx}% Times Roman font
+\usepackage{mathptmx}
 \usepackage[T1]{fontenc}
 \usepackage{lipsum} 
 \usepackage{sectsty}
 \usepackage{tikz-uml}
 \usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
 
-% Information about the Thesis 
-% -----------------------------------------------------------------------------
-% (All are compulsory, do not delete any line other than author Information)
-% For e.g., usually there are 3 students in a group, so leave authorone, 
-% authortwo, and authorthree, and delete authorfour.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Code listing settings
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    backgroundcolor=\color{gray!10}
+}
+
+% Information about the Project
 \department{Department of Computer Science}
 \faculty{Computer Science}
-\degreeyear{2022}
-\degreemonth{June}
+\degreeyear{2026}
+\degreemonth{May}
 \degreename{Computer Science}
 \campuscity{Islamabad}
-\authorone{Student 1}{19I-1234}
-\authortwo{Student 2}{19I-1234}
-\authorthree{Student 3}{19I-1234}
-\supervisor{Mr./ Ms./ Dr. Supervisor Name}
-\sessionduration{2018-2022}
-\cosupervisor{Mr./ Ms./ Dr. Supervisor Name}
+\authorone{Ali Irfan}{i212572}
+\authortwo{Rafay Khattak}{i210423}
+\authorthree{Nouman Hafeez}{i210416}
+\supervisor{Ms. Kainat Iqbal}
+\sessionduration{2021-2026}
+\cosupervisor{Ms. Saira Qamar}
 \deanname{Dr. Dean Computing}
 \directorname{Dr. Director of the Campus}
 \hodname{Dr. Head of Computer Science Department}
-\fypcoordinatorname{Name of FYP Coordinator}
-\title{Title of the Project here}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\fypcoordinatorname{FYP Coordinator}
+\title{CORAL: Consensus-based Refinement And Learning - A Multi-Hypothesis Correction Architecture for State-of-the-Art Urdu ASR - Iteration 1 Report}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Former document starts below this
 \begin{document}
 
-%\begin{acknowledgements}
-%	Your acknowledgments here
-%\end{acknowledgements}
-
-%\begin{abstract}
-%Briefly state the (1) research problem, (2) methodology, (3) key results, and (4) conclusion. Generally, abstracts are between 150 and 200 words–roughly 10-15 sentences.
-%\end{abstract}
+\begin{abstract}
+This report presents the outcomes of Iteration 1 for the CORAL (Consensus-based Refinement And Learning) project, a novel multi-hypothesis ASR system for low-resource Urdu language. The primary objective of this iteration was to establish the foundational infrastructure by integrating an ensemble of pre-trained ASR models and implementing word-level confidence score extraction mechanisms. We successfully deployed four state-of-the-art models (Whisper Large, Whisper Medium, Whisper Small, and Wav2Vec2-XLSR-Urdu) and evaluated their baseline performance on a 10-sample test set from the Common Voice Urdu dataset. Results demonstrate that Whisper Large achieves the best baseline WER of 17.76\%, establishing a performance benchmark for subsequent iterations. The complete pipeline for confidence-annotated hypothesis generation is now operational, with comprehensive evaluation metrics including WER, CER, confidence scores, and Expected Calibration Error (ECE). This foundational work enables the development of the instruction-guided correction system in Iteration 2.
+\end{abstract}
 
 \include{sections/chapter1}
 \include{sections/chapter2}
 \include{sections/chapter3}
-
-
-%\appendix
-%\include{appendix1/appendix1}
+\include{sections/conclusions}
 
 \bibliographystyle{plain}
 \bibliography{bib} 
-\addcontentsline{toc}{chapter}{References} 
+\addcontentsline{toc}{chapter}{References}
+
+\appendix
+\include{sections/appendix1}
 
 \end{document}
