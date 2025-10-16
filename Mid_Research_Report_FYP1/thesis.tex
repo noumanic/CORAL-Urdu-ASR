@@ -1,0 +1,174 @@
+\documentclass{fast-nuces-bs}
+\usepackage{blindtext}
+\usepackage{mathptmx}
+\usepackage[T1]{fontenc}
+\usepackage{lipsum} 
+\usepackage{sectsty}
+\usepackage{tikz-uml}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+
+% ===============================
+% CODE LISTING CONFIGURATION
+% ===============================
+
+% Required packages
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% ---------------------------------
+% Define custom colors
+% ---------------------------------
+\definecolor{codebg}{RGB}{245, 245, 250}
+\definecolor{keywordcolor}{RGB}{127, 0, 85}
+\definecolor{stringcolor}{RGB}{42, 161, 152}
+\definecolor{commentcolor}{RGB}{108, 117, 125}
+\definecolor{numbercolor}{RGB}{0, 92, 197}
+\definecolor{functioncolor}{RGB}{121, 93, 163}
+
+% ---------------------------------
+% Light Mode Python Code Style
+% ---------------------------------
+\lstdefinestyle{pythoncode}{
+    language=Python,
+    basicstyle=\ttfamily\small\color{black},
+    keywordstyle=\color{keywordcolor}\bfseries,
+    stringstyle=\color{stringcolor},
+    commentstyle=\color{commentcolor}\itshape,
+    numberstyle=\tiny\color{numbercolor},
+    emph={self, True, False, None},
+    emphstyle=\color{functioncolor}\bfseries,
+    breaklines=true,
+    breakatwhitespace=true,
+    showstringspaces=false,
+    numbers=left,
+    numbersep=8pt,
+    tabsize=4,
+    captionpos=b,
+    xleftmargin=15pt,
+    frame=single,
+    rulecolor=\color{gray!40},
+    backgroundcolor=\color{codebg},
+    aboveskip=15pt,
+    belowskip=15pt
+}
+
+% ---------------------------------
+% Optional Dark Mode Python Style
+% ---------------------------------
+\definecolor{modernbg}{RGB}{40, 44, 52}
+\definecolor{modernkeyword}{RGB}{198, 120, 221}
+\definecolor{modernstring}{RGB}{152, 195, 121}
+\definecolor{moderncomment}{RGB}{92, 99, 112}
+\definecolor{moderntext}{RGB}{171, 178, 191}
+\definecolor{modernnumber}{RGB}{209, 154, 102}
+
+\lstdefinestyle{pythoncode-dark}{
+    language=Python,
+    basicstyle=\ttfamily\small\color{moderntext},
+    backgroundcolor=\color{modernbg},
+    keywordstyle=\color{modernkeyword}\bfseries,
+    stringstyle=\color{modernstring},
+    commentstyle=\color{moderncomment}\itshape,
+    numberstyle=\tiny\color{modernnumber},
+    emph={self, True, False, None},
+    emphstyle=\color{modernkeyword}\bfseries,
+    breaklines=true,
+    breakatwhitespace=true,
+    showstringspaces=false,
+    numbers=left,
+    numbersep=8pt,
+    tabsize=4,
+    captionpos=b,
+    xleftmargin=15pt,
+    frame=none,
+    aboveskip=15pt,
+    belowskip=15pt
+}
+
+% ===============================
+% END CODE LISTING CONFIGURATION
+% ===============================
+
+% Fix chapter spacing - reduce vertical space before chapters
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{0pt}{30pt}
+
+% Fix section spacing
+\titlespacing*{\section}{0pt}{12pt plus 4pt minus 2pt}{6pt plus 2pt minus 2pt}
+\titlespacing*{\subsection}{0pt}{10pt plus 4pt minus 2pt}{4pt plus 2pt minus 2pt}
+\titlespacing*{\subsubsection}{0pt}{8pt plus 4pt minus 2pt}{4pt plus 2pt minus 2pt}
+
+% Reduce list spacing
+\usepackage{enumitem}
+\setlist{nosep, topsep=6pt, parsep=0pt, partopsep=0pt}
+
+% Code listing settings
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    backgroundcolor=\color{gray!10},
+    aboveskip=8pt,
+    belowskip=8pt
+}
+
+% Information about the Project
+\department{Department of Computer Science}
+\faculty{Computer Science}
+\degreeyear{2026}
+\degreemonth{May}
+\degreename{Computer Science}
+\campuscity{Islamabad}
+\authorone{Ali Irfan}{i212572}
+\authortwo{Rafay Khattak}{i210423}
+\authorthree{Nouman Hafeez}{i210416}
+\supervisor{Ms. Kainat Iqbal}
+\sessionduration{2021-2026}
+\cosupervisor{Ms. Saira Qamar}
+\deanname{Dr. Dean Computing}
+\directorname{Dr. Director of the Campus}
+\hodname{Dr. Head of Computer Science Department}
+\fypcoordinatorname{FYP Coordinator}
+\title{CORAL: Consensus-based Refinement And Learning - A Multi-Hypothesis Correction Architecture for State-of-the-Art Urdu ASR - Iteration 1 Report}
+
+\begin{document}
+
+% Abstract (Page 0)
+\pagenumbering{arabic}
+\setcounter{page}{0}
+\thispagestyle{empty}
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+This report presents the outcomes of Iteration 1 for the CORAL (Consensus-based Refinement And Learning) project, a novel multi-hypothesis ASR system for low-resource Urdu language. The primary objective of this iteration was to establish the foundational infrastructure by integrating an ensemble of pre-trained ASR models and implementing word-level confidence score extraction mechanisms. We successfully deployed four state-of-the-art models (Whisper Large, Whisper Medium, Whisper Small, and Wav2Vec2-XLSR-Urdu) and evaluated their baseline performance on a 10-sample test set from the Common Voice Urdu dataset. Results demonstrate that Whisper Large achieves the best baseline WER of 17.76\%, establishing a performance benchmark for subsequent iterations. The complete pipeline for confidence-annotated hypothesis generation is now operational, with comprehensive evaluation metrics including WER, CER, confidence scores, and Expected Calibration Error (ECE). This foundational work enables the development of the instruction-guided correction system in Iteration 2.
+
+\clearpage
+
+% Start main matter with ToC, LoF, LoT (Pages 1-4)
+\startmainmatter
+
+% Main chapters start after lists (Page 5+)
+\input{sections/chapter1}
+\input{sections/chapter2}
+\input{sections/chapter3}
+\input{sections/conclusions}
+
+% Bibliography
+\bibliographystyle{plain}
+\bibliography{bib}
+\addcontentsline{toc}{chapter}{References}
+\end{document}
