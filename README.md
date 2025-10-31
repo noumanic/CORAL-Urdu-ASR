@@ -83,8 +83,7 @@ Benchmark leading ASR models for Urdu recognition, establish confidence calibrat
 
 2. **Run demo app or evaluation notebooks:**
    - Start in `iteration1/CORAL_Iteration1_ASR_Ensemble.ipynb` for a live inference server (with web UI for upload, recording, dataset export).
-   - Use `iteration1/CORAL_Iteration1_Baseline_Evaluation.ipynb` for model benchmarking, result generation, and visual plots.
-   - Open `iteration1/CORAL_Iteration1_Evaluation_FrontEnd.ipynb` for interactive dashboard results and further experiments.
+   - Use `iteration1/CORAL_Iteration1_Baseline_Evaluation.ipynb` for model benchmarking, result generation, and visual plots with interactive dashboard results and further experiments.
 
 3. **Datasets:**
    - All publicly available and collected speech can be found in `dataset/` (including `.mp3`, `.webm`, `.tsv`, `.json`).
