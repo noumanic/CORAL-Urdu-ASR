@@ -778,21 +778,12 @@ def compute_ece(confidences: np.ndarray,
                     <strong>Citation for ECE:</strong><br>
                     Guo, C., et al. (2017). On Calibration of Modern Neural Networks. ICML.<br><br>
                     
-                    <strong>Your CORAL Platform uses:</strong><br>
+                    <strong>Our CORAL Platform uses:</strong><br>
                     • Edit Distance for WER/CER calculation<br>
                     • 10-bin ECE for confidence calibration<br>
                     • Word-level and character-level comparisons<br>
                     • Multiple ASR models (Whisper, Wav2Vec2, MMS, SeamlessM4T)
                 </div>
-            </div>
-
-            <h3>Quick Formula Reference:</h3>
-            <div class="formula-box">
-                $\boxed{\text{WER} = \frac{S + D + I}{N} \times 100\%}$
-                <br>
-                $\boxed{\text{CER} = \frac{S_c + D_c + I_c}{C} \times 100\%}$
-                <br>
-                $\boxed{\text{ECE} = \sum_{m=1}^{M} \frac{|B_m|}{N} \left| \text{acc}(B_m) - \text{conf}(B_m) \right|}$
             </div>
         </div>
 
