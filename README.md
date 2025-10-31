@@ -25,8 +25,7 @@ CORAL-Urdu-ASR/
 │
 ├── iteration1/
 │   ├── CORAL_Iteration1_ASR_Ensemble.ipynb      # ASR wrapper demo app (Flask, real-time, streaming, dataset collection)
-│   ├── CORAL_Iteration1_Baseline_Evaluation.ipynb   # Model benchmarking and analysis
-│   └── CORAL_Iteration1_Evaluation_FrontEnd.ipynb  # Dashboard, evaluation UI, and visualizations
+│   └── CORAL_Iteration1_Baseline_Evaluation.ipynb   # Model benchmarking and analysis with Dashboard, evaluation UI, and visualizations
 │
 ├── Mid_Research_Report_FYP1/   # Project thesis/report (LaTeX), figs, bib, etc
 │
