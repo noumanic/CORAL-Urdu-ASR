@@ -1,5 +1,5 @@
 torch
-transformers
+transformers>=4.36.0
 librosa
 soundfile
 numpy
@@ -8,3 +8,6 @@ matplotlib
 seaborn
 editdistance
 tqdm
+accelerate
+indic-transliteration
+sentencepiece
