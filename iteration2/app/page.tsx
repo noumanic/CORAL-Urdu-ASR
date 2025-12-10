@@ -59,6 +59,10 @@ export default function Home() {
   const [groundTruthSentence, setGroundTruthSentence] = useState<string>("");
   // Custom prompt for alif_1 model
   const [customPrompt, setCustomPrompt] = useState<string>("");
+  // Connection test states
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<"success" | "error" | null>(null);
+  const [connectionMessage, setConnectionMessage] = useState<string>("");
   
   // CSV related state
   const [csvData, setCsvData] = useState<CSVRow[]>([]);
@@ -329,31 +333,68 @@ export default function Home() {
   };
 
   const testConnection = async () => {
+    if (!ngrokUrl.trim()) {
+      setConnectionStatus("error");
+      setConnectionMessage("Please enter a ngrok URL first");
+      setTimeout(() => setConnectionStatus(null), 5000);
+      return;
+    }
+
+    setIsTestingConnection(true);
+    setConnectionStatus(null);
+    setConnectionMessage("");
+    setError("");
+
     try {
       const response = await axios.get(`${ngrokUrl}/`, {
         headers: {
           "ngrok-skip-browser-warning": "true",
         },
-        timeout: 5000,
+        timeout: 8000,
       });
+      
       if (response.data.status === "CORAL Backend is Running") {
+        setConnectionStatus("success");
+        setConnectionMessage("Connection successful! Backend is running and ready.");
         setError("");
-        alert("✅ Connection successful! Backend is running.");
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => {
+          setConnectionStatus(null);
+          setConnectionMessage("");
+        }, 5000);
+      } else {
+        setConnectionStatus("error");
+        setConnectionMessage("Backend responded but with unexpected status. Please check the server.");
+        setTimeout(() => setConnectionStatus(null), 8000);
       }
     } catch (err) {
+      let errorMsg = "";
       if (axios.isAxiosError(err)) {
-        if (err.code === "ECONNREFUSED" || err.message.includes("Network Error")) {
-          setError(
-            `❌ Cannot connect to ${ngrokUrl}\n\n` +
-            `Please check:\n` +
-            `1. Is the Flask server running in Kaggle?\n` +
-            `2. Is ngrok tunnel active? (Check Kaggle console for the ngrok URL)\n` +
-            `3. Update the ngrok URL in Settings if it has changed`
-          );
+        if (err.code === "ECONNREFUSED" || err.message.includes("Network Error") || err.message.includes("ERR_NETWORK")) {
+          errorMsg = "Cannot connect to the backend server";
+        } else if (err.code === "ECONNABORTED" || err.message.includes("timeout")) {
+          errorMsg = "Connection timeout - server is taking too long to respond";
+        } else if (err.response?.status === 404) {
+          errorMsg = "Endpoint not found - check if the Flask server is running";
+        } else if (err.response?.status >= 500) {
+          errorMsg = "Server error - backend may be experiencing issues";
         } else {
-          setError(`Connection test failed: ${err.message}`);
+          errorMsg = `Connection failed: ${err.message}`;
         }
+      } else {
+        errorMsg = "An unexpected error occurred while testing connection";
       }
+
+      setConnectionStatus("error");
+      setConnectionMessage(errorMsg);
+      setError("");
+      // Auto-hide error message after 8 seconds
+      setTimeout(() => {
+        setConnectionStatus(null);
+        setConnectionMessage("");
+      }, 8000);
+    } finally {
+      setIsTestingConnection(false);
     }
   };
 
@@ -418,6 +459,18 @@ export default function Home() {
             `2. Ngrok tunnel is active (check Kaggle console)\n` +
             `3. Update ngrok URL in Settings above\n` +
             `4. Click "Test Connection" to verify`
+          );
+        } else if (err.response?.status === 404) {
+          setError(
+            `❌ 404 Error: Endpoint not found!\n\n` +
+            `The server cannot find the '/correct' endpoint.\n\n` +
+            `Please check:\n` +
+            `1. Re-run the Flask route cell in Kaggle (the cell with @app.route('/correct'))\n` +
+            `2. Verify the route is registered (check Kaggle console for route list)\n` +
+            `3. Restart the Flask server if needed\n` +
+            `4. Make sure you're using the correct ngrok URL\n\n` +
+            `Current URL: ${ngrokUrl}\n` +
+            `Expected endpoint: ${ngrokUrl}/correct`
           );
         } else if (err.code === "ECONNABORTED") {
           setError("Request timeout. The server is taking too long to respond.");
@@ -486,28 +539,111 @@ export default function Home() {
                 <input
                   type="text"
                   value={ngrokUrl}
-                  onChange={(e) => setNgrokUrl(e.target.value.trim())}
+                  onChange={(e) => {
+                    setNgrokUrl(e.target.value.trim());
+                    // Clear connection status when URL changes
+                    if (connectionStatus) {
+                      setConnectionStatus(null);
+                      setConnectionMessage("");
+                    }
+                  }}
                   placeholder="https://xxxx-xxxx-xxxx.ngrok-free.dev"
                   className={cn(
                     "flex-1 bg-slate-900/80 border rounded-lg px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 transition-all font-mono text-sm",
-                    ngrokUrl
+                    connectionStatus === "success"
+                      ? "border-emerald-500/70 focus:ring-emerald-500/50 focus:border-emerald-500"
+                      : connectionStatus === "error"
+                      ? "border-red-500/70 focus:ring-red-500/50 focus:border-red-500"
+                      : ngrokUrl
                       ? "border-emerald-500/50 focus:ring-emerald-500/50 focus:border-emerald-500/50"
                       : "border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50"
                   )}
                 />
                 <button
                   onClick={testConnection}
-                  disabled={!ngrokUrl.trim()}
+                  disabled={!ngrokUrl.trim() || isTestingConnection}
                   className={cn(
-                    "px-4 py-2 border rounded-lg transition-all text-sm font-medium whitespace-nowrap",
-                    ngrokUrl.trim()
-                      ? "bg-cyan-600/20 hover:bg-cyan-600/30 border-cyan-500/30 text-cyan-400"
+                    "px-6 py-3 border rounded-lg transition-all text-sm font-medium whitespace-nowrap flex items-center gap-2 min-w-[100px] justify-center",
+                    isTestingConnection
+                      ? "bg-slate-700/50 border-slate-600/50 text-slate-400 cursor-wait"
+                      : ngrokUrl.trim()
+                      ? "bg-cyan-600/20 hover:bg-cyan-600/30 border-cyan-500/30 text-cyan-400 hover:scale-105 active:scale-95"
                       : "bg-slate-800/50 border-slate-600/50 text-slate-600 cursor-not-allowed"
                   )}
                 >
-                  Test
+                  {isTestingConnection ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Testing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className={cn(
+                        "w-4 h-4 transition-opacity",
+                        connectionStatus === "success" ? "opacity-100" : "opacity-0"
+                      )} />
+                      <span>Test</span>
+                    </>
+                  )}
                 </button>
               </div>
+              
+              {/* Connection Status Messages */}
+              {connectionStatus && connectionMessage && (
+                <div
+                  className={cn(
+                    "mt-3 p-4 rounded-lg border animate-in fade-in slide-in-from-top-2 duration-300",
+                    connectionStatus === "success"
+                      ? "bg-emerald-500/10 border-emerald-500/30"
+                      : "bg-red-500/10 border-red-500/30"
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    {connectionStatus === "success" ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                    )}
+                    <div className="flex-1">
+                      <h4
+                        className={cn(
+                          "font-semibold mb-1 text-sm",
+                          connectionStatus === "success"
+                            ? "text-emerald-400"
+                            : "text-red-400"
+                        )}
+                      >
+                        {connectionStatus === "success"
+                          ? "Connection Successful!"
+                          : "Connection Failed"}
+                      </h4>
+                      <p
+                        className={cn(
+                          "text-sm leading-relaxed",
+                          connectionStatus === "success"
+                            ? "text-emerald-300/90"
+                            : "text-red-300/90"
+                        )}
+                      >
+                        {connectionMessage}
+                      </p>
+                      {connectionStatus === "error" && (
+                        <div className="mt-3 pt-3 border-t border-red-500/20">
+                          <p className="text-xs text-red-400/80 font-medium mb-2">
+                            Troubleshooting steps:
+                          </p>
+                          <ul className="text-xs text-red-300/80 space-y-1 list-disc list-inside">
+                            <li>Verify the Flask server is running in Kaggle</li>
+                            <li>Check if the ngrok tunnel is active (look for the URL in Kaggle console)</li>
+                            <li>Ensure the URL matches exactly (copy from Kaggle output)</li>
+                            <li>Try refreshing the ngrok tunnel if it expired</li>
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
               {!ngrokUrl && (
                 <div className="mt-2 p-2 bg-red-500/10 border border-red-500/30 rounded text-xs text-red-400">
                   ⚠️ Ngrok URL is required! Get it from your Kaggle console after running the ngrok cell.
@@ -669,7 +805,7 @@ export default function Home() {
           <textarea
             value={customPrompt}
             onChange={(e) => setCustomPrompt(e.target.value)}
-            placeholder="Enter your custom prompt for the Alif_1 model...&#10;&#10;You can use {hypotheses} as a placeholder where the 4 ASR hypotheses will be inserted.&#10;&#10;Example:&#10;You are an expert Urdu text correction system. Combine these 4 ASR transcriptions:&#10;{hypotheses}&#10;&#10;Output only the corrected Urdu sentence."
+            placeholder="Enter your custom prompt for the Alif_1 model...&#10;&#10;Note: The 4 ASR transcriptions will be sent FIRST, then your prompt.&#10;&#10;Placeholder options:&#10;- {hypotheses} - All 4 transcriptions formatted as H1, H2, H3, H4&#10;- {predictions[0]}, {predictions[1]}, {predictions[2]}, {predictions[3]} - Individual transcriptions&#10;&#10;Example (Urdu):&#10;یہ 4 ASR ماڈلز کی پیشن گوئیاں ہیں:&#10;1. {predictions[0]}&#10;2. {predictions[1]}&#10;..."
             className={cn(
               "w-full h-48 bg-slate-900/80 border border-slate-600/50 rounded-lg px-4 py-3",
               "text-slate-200 placeholder-slate-500 text-sm leading-relaxed",
@@ -680,12 +816,36 @@ export default function Home() {
           />
           <div className="flex items-start gap-2 mt-3">
             <p className="text-xs text-slate-500 flex-1">
-              Use <code className="bg-slate-800 px-1.5 py-0.5 rounded text-purple-300">{"{hypotheses}"}</code> as placeholder for the 4 ASR hypotheses. 
+              <strong>Note:</strong> The 4 ASR transcriptions are sent FIRST, then your prompt. 
+              Use <code className="bg-slate-800 px-1.5 py-0.5 rounded text-purple-300">{"{hypotheses}"}</code> or <code className="bg-slate-800 px-1.5 py-0.5 rounded text-purple-300">{"{predictions[0]}"}</code> placeholders to control where transcriptions appear.
               If no prompt is provided, the default prompt will be used.
             </p>
-            <button
-              onClick={() => {
-                setCustomPrompt(`You are an expert Urdu text correction system. Combine 4 ASR transcriptions into one perfect Urdu sentence.
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setCustomPrompt(`یہ 4 ASR ماڈلز کی پیشن گوئیاں ہیں (لفظ اور اعتماد):
+
+1. {predictions[0]}
+
+2. {predictions[1]}
+
+3. {predictions[2]}
+
+4. {predictions[3]}
+
+
+
+ایک صحیح جملہ اس طرح ہونا چاہیے: واضح، درست املا، مکمل الفاظ کے ساتھ۔
+
+ان تمام پیشن گوئیوں کو مدنظر رکھتے ہوئے، صحیح ترین اردو جملہ لکھیں:`);
+                }}
+                className="px-3 py-1.5 text-xs bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-400 rounded transition-all whitespace-nowrap"
+              >
+                Load Urdu Template
+              </button>
+              <button
+                onClick={() => {
+                  setCustomPrompt(`You are an expert Urdu text correction system. Combine the 4 ASR transcriptions above into one perfect Urdu sentence.
 
 Rules:
 1. Use words where 2+ models agree (confidence >0.60)
@@ -700,15 +860,13 @@ CRITICAL - Output Format:
 - NO asterisks (*), backslashes (\\), or corrupted characters
 - NO confidence scores in output
 - Simple, clean, readable Urdu text only
-- End with proper punctuation (۔)
-
-Input:
-{hypotheses}`);
-              }}
-              className="px-3 py-1.5 text-xs bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-400 rounded transition-all whitespace-nowrap"
-            >
-              Load Template
-            </button>
+- End with proper punctuation (۔)`);
+                }}
+                className="px-3 py-1.5 text-xs bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-400 rounded transition-all whitespace-nowrap"
+              >
+                Load English Template
+              </button>
+            </div>
           </div>
         </div>
 
