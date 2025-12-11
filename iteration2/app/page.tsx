@@ -374,10 +374,14 @@ export default function Home() {
           errorMsg = "Cannot connect to the backend server";
         } else if (err.code === "ECONNABORTED" || err.message.includes("timeout")) {
           errorMsg = "Connection timeout - server is taking too long to respond";
-        } else if (err.response?.status === 404) {
-          errorMsg = "Endpoint not found - check if the Flask server is running";
-        } else if (err.response?.status >= 500) {
-          errorMsg = "Server error - backend may be experiencing issues";
+        } else if (err.response) {
+          if (err.response.status === 404) {
+            errorMsg = "Endpoint not found - check if the Flask server is running";
+          } else if (err.response.status >= 500) {
+            errorMsg = "Server error - backend may be experiencing issues";
+          } else {
+            errorMsg = `Connection failed: ${err.message}`;
+          }
         } else {
           errorMsg = `Connection failed: ${err.message}`;
         }
@@ -436,6 +440,22 @@ export default function Home() {
           const errorData = err.response.data;
           let errorMsg = errorData?.error || errorData?.message || err.message;
           
+          // Handle 404 specifically
+          if (err.response.status === 404) {
+            setError(
+              `❌ 404 Error: Endpoint not found!\n\n` +
+              `The server cannot find the '/correct' endpoint.\n\n` +
+              `Please check:\n` +
+              `1. Re-run the Flask route cell in Kaggle (the cell with @app.route('/correct'))\n` +
+              `2. Verify the route is registered (check Kaggle console for route list)\n` +
+              `3. Restart the Flask server if needed\n` +
+              `4. Make sure you're using the correct ngrok URL\n\n` +
+              `Current URL: ${ngrokUrl}\n` +
+              `Expected endpoint: ${ngrokUrl}/correct`
+            );
+            return;
+          }
+          
           // Add debug info if available
           if (errorData?.raw_response) {
             errorMsg += `\n\nRaw response (first 200 chars): ${errorData.raw_response.substring(0, 200)}`;
@@ -459,18 +479,6 @@ export default function Home() {
             `2. Ngrok tunnel is active (check Kaggle console)\n` +
             `3. Update ngrok URL in Settings above\n` +
             `4. Click "Test Connection" to verify`
-          );
-        } else if (err.response?.status === 404) {
-          setError(
-            `❌ 404 Error: Endpoint not found!\n\n` +
-            `The server cannot find the '/correct' endpoint.\n\n` +
-            `Please check:\n` +
-            `1. Re-run the Flask route cell in Kaggle (the cell with @app.route('/correct'))\n` +
-            `2. Verify the route is registered (check Kaggle console for route list)\n` +
-            `3. Restart the Flask server if needed\n` +
-            `4. Make sure you're using the correct ngrok URL\n\n` +
-            `Current URL: ${ngrokUrl}\n` +
-            `Expected endpoint: ${ngrokUrl}/correct`
           );
         } else if (err.code === "ECONNABORTED") {
           setError("Request timeout. The server is taking too long to respond.");
