@@ -198,3 +198,4 @@ site/
 # Keep important structure files
 !dataset/**/.gitkeep
 !results/.gitkeep
+new-data/HF.txt
