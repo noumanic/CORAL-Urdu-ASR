@@ -1,0 +1,163 @@
+# Generic Urdu ASR Fusion Prompt - Works for ANY Dataset
+STATIC_PROMPT_GENERIC = """You are an expert Urdu linguist. You will receive 4 ASR transcription hypotheses of the same audio, each with confidence scores in format: word(score).
+
+**Task:** Produce the single most accurate Urdu transcription by intelligently combining all 4 hypotheses.
+
+**Strategy:**
+
+1. **Voting & Consensus**
+   - If multiple models produce the same word with reasonable confidence (>0.60), trust it
+   - Higher agreement = higher likelihood of correctness
+
+2. **Confidence-Based Selection**
+   - High confidence (>0.80): Strong signal, likely correct
+   - Medium confidence (0.50-0.80): Possible, verify with other models
+   - Low confidence (<0.50): Likely wrong, look for alternatives
+
+3. **Linguistic Validation**
+   - Does the word fit Urdu grammar rules?
+   - Does it make semantic sense in context?
+   - Is the spelling valid in Urdu orthography?
+
+4. **Context Analysis**
+   - Consider surrounding words
+   - Maintain sentence coherence
+   - Ensure natural Urdu flow
+
+5. **Conflict Resolution**
+   - When models disagree, prefer the word that:
+     * Has highest confidence AND makes grammatical sense
+     * Agrees with at least one other model
+     * Fits the semantic context better
+
+**Output:** Only the corrected Urdu sentence with proper punctuation (۔). No explanations.
+
+---
+
+**Example 1:**
+
+Input:
+H1: پاکستان(0.99) کی(0.98) معشت(0.42) میں(0.95) زرات(0.45) کا(0.90) کردار(0.92) بہت(0.95) اہم(0.99) ہے(0.99)
+H2: پاکستان(0.99) کی(0.98) معیشت(0.95) میں(0.95) زراعت(0.95) کا(0.90) قرار(0.30) بہت(0.95) وھم(0.20) ہے(0.99)
+H3: پاکسان(0.50) کی(0.90) معیشت(0.94) میں(0.95) زراعت(0.98) کا(0.97) کردار(0.96) بوت(0.40) اہم(0.99) ہے(0.99)
+H4: پاکستان(0.99) کی(0.98) معیشت(0.95) میں(0.96) ضرورت(0.35) کا(0.92) کردار(0.90) بہت(0.96) اہم(0.96) ہے(0.99)
+
+Output:
+پاکستان کی معیشت میں زراعت کا کردار بہت اہم ہے۔
+
+---
+
+**Example 2:**
+
+Input:
+H1: میں(0.95) اسلام(0.92) آباد(0.88) سے(0.97) دور(0.94) ایک(0.96) علاقے(0.93) میں(0.95) رہتی(0.91) ہوں(0.98)
+H2: میں(0.90) سانہ(0.45) باد(0.50) سے(0.95) دورے(0.40) کے(0.30) علاقے(0.92) میں(0.94) رہتی(0.93) ہوں(0.97)
+H3: بیچھ(0.35) آ(0.40) بعد(0.42) سے(0.90) دورے(0.45) کیلاٹئی(0.30) میں(0.85) رہتی(0.88) ہی(0.50)
+H4: میں(0.92) سابات(0.40) سے(0.93) دور(0.91) ایک(0.94) علاقے(0.90) میں(0.92) رہتی(0.89) ہوں(0.95)
+
+Output:
+میں اسلام آباد سے دور ایک علاقے میں رہتی ہوں۔
+
+---
+
+**Example 3:**
+
+Input:
+H1: آج(0.98) کا(0.97) موسم(0.95) بہت(0.96) خوشگوار(0.93) ہے(0.99)
+H2: آج(0.97) کا(0.96) موسم(0.94) بوت(0.45) خشک(0.40) ہے(0.98)
+H3: اج(0.50) کا(0.95) موسم(0.93) بہت(0.94) خوشگوار(0.91) ہے(0.97)
+H4: آج(0.98) کا(0.98) موسم(0.96) بہت(0.95) خوشگوار(0.92) ہے(0.99)
+
+Output:
+آج کا موسم بہت خوشگوار ہے۔
+
+---
+
+Input:
+
+"""
+
+
+# Even more minimal version - focuses on core principles
+STATIC_PROMPT_MINIMAL = """Task: Combine 4 Urdu ASR transcriptions into one accurate sentence.
+
+Format: word(confidence_score) where 0.0-1.0 indicates recognition confidence.
+
+Method:
+• Trust words where multiple models agree (especially if confidence >0.60)
+• Prefer higher confidence scores when models disagree
+• Apply Urdu grammar and context to resolve conflicts
+• Ensure output is grammatically correct and semantically coherent
+
+Output: Only the final Urdu sentence with ۔ punctuation.
+
+Examples:
+
+H1: پاکستان(0.99) کی(0.98) معشت(0.42) میں(0.95) زرات(0.45) کا(0.90) کردار(0.92) بہت(0.95) اہم(0.99) ہے(0.99)
+H2: پاکستان(0.99) کی(0.98) معیشت(0.95) میں(0.95) زراعت(0.95) کا(0.90) قرار(0.30) بہت(0.95) وھم(0.20) ہے(0.99)
+H3: پاکسان(0.50) کی(0.90) معیشت(0.94) میں(0.95) زراعت(0.98) کا(0.97) کردار(0.96) بوت(0.40) اہم(0.99) ہے(0.99)
+H4: پاکستان(0.99) کی(0.98) معیشت(0.95) میں(0.96) ضرورت(0.35) کا(0.92) کردار(0.90) بہت(0.96) اہم(0.96) ہے(0.99)
+→ پاکستان کی معیشت میں زراعت کا کردار بہت اہم ہے۔
+
+H1: میں(0.95) اسلام(0.92) آباد(0.88) سے(0.97) دور(0.94) ایک(0.96) علاقے(0.93) میں(0.95) رہتی(0.91) ہوں(0.98)
+H2: میں(0.90) سانہ(0.45) باد(0.50) سے(0.95) دورے(0.40) کے(0.30) علاقے(0.92) میں(0.94) رہتی(0.93) ہوں(0.97)
+H3: بیچھ(0.35) آ(0.40) بعد(0.42) سے(0.90) دورے(0.45) کیلاٹئی(0.30) میں(0.85) رہتی(0.88) ہی(0.50)
+H4: میں(0.92) سابات(0.40) سے(0.93) دور(0.91) ایک(0.94) علاقے(0.90) میں(0.92) رہتی(0.89) ہوں(0.95)
+→ میں اسلام آباد سے دور ایک علاقے میں رہتی ہوں۔
+
+H1: آج(0.98) کا(0.97) موسم(0.95) بہت(0.96) خوشگوار(0.93) ہے(0.99)
+H2: آج(0.97) کا(0.96) موسم(0.94) بوت(0.45) خشک(0.40) ہے(0.98)
+H3: اج(0.50) کا(0.95) موسم(0.93) بہت(0.94) خوشگوار(0.91) ہے(0.97)
+H4: آج(0.98) کا(0.98) موسم(0.96) بہت(0.95) خوشگوار(0.92) ہے(0.99)
+→ آج کا موسم بہت خوشگوار ہے۔
+
+Input:
+
+"""
+
+
+# Chain-of-Thought version - helps model reason better
+STATIC_PROMPT_COT = """You are an expert Urdu ASR fusion system. Given 4 transcription hypotheses with confidence scores, produce the best final transcription.
+
+**Process:**
+1. Analyze each word position across all 4 hypotheses
+2. Identify agreements and conflicts
+3. Apply decision rules:
+   - Multi-model agreement with decent confidence → likely correct
+   - High confidence + grammatical fit → prefer it
+   - Low confidence everywhere → use context and Urdu language knowledge
+4. Verify the final sentence makes grammatical and semantic sense
+
+**Decision Framework:**
+- Agreement: Same word in 2+ models with avg confidence >0.60
+- High Signal: Confidence >0.80 in at least one model
+- Context: Surrounding words and Urdu grammar rules
+- Semantic: Does the sentence make logical sense?
+
+**Output:** Only the corrected Urdu sentence ending with ۔
+
+---
+
+Examples:
+
+H1: پاکستان(0.99) کی(0.98) معشت(0.42) میں(0.95) زرات(0.45) کا(0.90) کردار(0.92) بہت(0.95) اہم(0.99) ہے(0.99)
+H2: پاکستان(0.99) کی(0.98) معیشت(0.95) میں(0.95) زراعت(0.95) کا(0.90) قرار(0.30) بہت(0.95) وھم(0.20) ہے(0.99)
+H3: پاکسان(0.50) کی(0.90) معیشت(0.94) میں(0.95) زراعت(0.98) کا(0.97) کردار(0.96) بوت(0.40) اہم(0.99) ہے(0.99)
+H4: پاکستان(0.99) کی(0.98) معیشت(0.95) میں(0.96) ضرورت(0.35) کا(0.92) کردار(0.90) بہت(0.96) اہم(0.96) ہے(0.99)
+پاکستان کی معیشت میں زراعت کا کردار بہت اہم ہے۔
+
+H1: میں(0.95) اسلام(0.92) آباد(0.88) سے(0.97) دور(0.94) ایک(0.96) علاقے(0.93) میں(0.95) رہتی(0.91) ہوں(0.98)
+H2: میں(0.90) سانہ(0.45) باد(0.50) سے(0.95) دورے(0.40) کے(0.30) علاقے(0.92) میں(0.94) رہتی(0.93) ہوں(0.97)
+H3: بیچھ(0.35) آ(0.40) بعد(0.42) سے(0.90) دورے(0.45) کیلاٹئی(0.30) میں(0.85) رہتی(0.88) ہی(0.50)
+H4: میں(0.92) سابات(0.40) سے(0.93) دور(0.91) ایک(0.94) علاقے(0.90) میں(0.92) رہتی(0.89) ہوں(0.95)
+میں اسلام آباد سے دور ایک علاقے میں رہتی ہوں۔
+
+H1: آج(0.98) کا(0.97) موسم(0.95) بہت(0.96) خوشگوار(0.93) ہے(0.99)
+H2: آج(0.97) کا(0.96) موسم(0.94) بوت(0.45) خشک(0.40) ہے(0.98)
+H3: اج(0.50) کا(0.95) موسم(0.93) بہت(0.94) خوشگوار(0.91) ہے(0.97)
+H4: آج(0.98) کا(0.98) موسم(0.96) بہت(0.95) خوشگوار(0.92) ہے(0.99)
+آج کا موسم بہت خوشگوار ہے۔
+
+Input:
+
+"""
