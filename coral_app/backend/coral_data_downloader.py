@@ -3,6 +3,9 @@ import requests
 from pathlib import Path
 from huggingface_hub import login
 from dotenv import load_dotenv
+from bktree import BKNode,BKTree
+import duckdb
+import joblib
 load_dotenv()
 
 BUCKET_URL = os.environ.get("BUCKET_URL")
@@ -41,3 +44,4 @@ def download_file(fname):
 print("Downloading dataset...")
 local_paths = {fname: download_file(fname) for fname in FILES}
 print("Downloading complete...")
+print("Loading functions")
