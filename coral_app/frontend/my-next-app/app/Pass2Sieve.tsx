@@ -8,6 +8,7 @@ interface Props {
 }
 
 const SIEVE_DELAY_MS = 180;
+const MODELS = ["seamless_large", "whisper_large", "whisper_medium", "wav2vec_urdu"];
 
 export default function Pass2Sieve({ alignInfo, onOOVResult }: Props) {
   const source       = alignInfo.source_model as string;
@@ -119,6 +120,45 @@ export default function Pass2Sieve({ alignInfo, onOOVResult }: Props) {
               );
             })}
           </div>
+          {/* model transcripts for context */}
+          {(running || done) && (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 space-y-3">
+              <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-2">
+                All Model Outputs
+              </p>
+              {MODELS.map(model => {
+                const mdata = alignInfo[model] as { normalized_attempt: string[]; attempt_matchinfo: number[] };
+                if (!mdata) return null;
+                return (
+                  <div key={model} className="flex items-start gap-3" dir="rtl">
+                    <span className="shrink-0 text-xs font-mono text-zinc-600 text-left w-28" dir="ltr">
+                      {model === alignInfo.source_model ? `★ ${model}` : model}
+                    </span>
+                    <div className="flex flex-wrap gap-1.5" dir="rtl">
+                      {mdata.normalized_attempt.map((word, i) => {
+                        const isSubstitution = mdata.attempt_matchinfo[i] === 3;
+                        const oov = done && isOOV(word);
+                        return (
+                          <span
+                            key={i}
+                            className={`px-2 py-1 rounded font-urdu text-sm border ${
+                              oov
+                                ? "border-rose-700 bg-rose-950 text-rose-300"
+                                : isSubstitution
+                                ? "border-amber-900 bg-amber-950 text-amber-400"
+                                : "border-zinc-800 bg-zinc-900 text-zinc-400"
+                            }`}
+                          >
+                            {word}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* sieve progress bar */}
           {running && sievePos !== null && (
