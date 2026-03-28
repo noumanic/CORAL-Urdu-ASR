@@ -43,6 +43,7 @@ export type OOVMetadata = Record<string, Record<string, CandidateMeta>>;
 export interface OOVResult {
   oov_dict: string[];
   metadata: OOVMetadata;
+  columns: string[]
 }
 
 export interface CorrectionResult {

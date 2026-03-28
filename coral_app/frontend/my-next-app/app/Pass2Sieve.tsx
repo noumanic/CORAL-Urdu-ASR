@@ -252,7 +252,7 @@ export default function Pass2Sieve({ alignInfo, models, onOOVResult }: Props) {
 
       {/* candidate inspector */}
       {activeToken && oovResult?.metadata[activeToken] && (
-        <CandidatePanel token={activeToken} metadata={oovResult.metadata[activeToken]} />
+        <CandidatePanel token={activeToken} metadata={oovResult.metadata[activeToken]} columns={oovResult.columns} />
       )}
 
       {/* OOV summary chips */}
@@ -296,9 +296,12 @@ export default function Pass2Sieve({ alignInfo, models, onOOVResult }: Props) {
   );
 }
 
-function CandidatePanel({ token, metadata }: { token: string; metadata: Record<string, CandidateMeta> }) {
+function CandidatePanel({ token, metadata, columns }: { token: string; metadata: Record<string, CandidateMeta>; columns: string[] }) {
   const entries = Object.entries(metadata);
-  const maxUni  = Math.max(...entries.map(([, m]) => m[6] ?? 0), 1);
+  const maxTri = Math.max(...entries.map(([, m]) => m[4] ?? 0), 1);
+  const maxBi  = Math.max(...entries.map(([, m]) => m[5] ?? 0), 1);
+  const maxUni = Math.max(...entries.map(([, m]) => m[6] ?? 0), 1);
+
   return (
     <div className="rounded-xl border border-rose-900 bg-zinc-950 overflow-hidden">
       <div className="px-4 py-3 border-b border-rose-900 bg-rose-950/20 flex items-center gap-3">
@@ -313,19 +316,15 @@ function CandidatePanel({ token, metadata }: { token: string; metadata: Record<s
         <table className="w-full text-sm font-mono">
           <thead>
             <tr className="border-b border-zinc-800 text-zinc-500">
-              <th className="px-4 py-2 text-right font-normal">Word</th>
-              <th className="px-3 py-2 text-center font-normal">Dist</th>
-              <th className="px-3 py-2 text-center font-normal">Tri</th>
-              <th className="px-3 py-2 text-center font-normal">Bi</th>
-              <th className="px-3 py-2 text-center font-normal">Uni</th>
-              <th className="px-4 py-2 text-left font-normal text-zinc-600">Frequency</th>
+              {columns.map(col => (
+                <th key={col} className="px-3 py-2 text-center font-normal">{col}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {entries.map(([word, meta], i) => {
-              const [dist, tri, bi, uni, , , uniFreq] = meta;
+              const [dist, tri, bi, uni, triFreq, biFreq, uniFreq] = meta;
               const isTop  = i === 0;
-              const barPct = uniFreq > 0 ? (uniFreq / maxUni) * 100 : 0;
               return (
                 <tr key={word} className={`border-b border-zinc-900 ${isTop ? "bg-zinc-900/60" : "hover:bg-zinc-900/20"}`}>
                   <td className="px-4 py-2 text-right font-urdu text-base">
@@ -342,14 +341,28 @@ function CandidatePanel({ token, metadata }: { token: string; metadata: Record<s
                   <td className="px-3 py-2 text-center text-zinc-500 tabular-nums">{tri}/3</td>
                   <td className="px-3 py-2 text-center text-zinc-500 tabular-nums">{bi}/2</td>
                   <td className="px-3 py-2 text-center text-zinc-500 tabular-nums">{uni}</td>
-                  <td className="px-4 py-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 h-1 rounded-full bg-zinc-800 overflow-hidden">
-                        <div className="h-full bg-violet-600 transition-all" style={{ width: `${barPct}%` }} />
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-1">
+                      <div className="w-10 h-1 rounded-full bg-zinc-800 overflow-hidden">
+                        <div className="h-full bg-amber-600" style={{ width: `${triFreq > 0 ? (triFreq/maxTri)*100 : 0}%` }} />
                       </div>
-                      <span className="text-zinc-600 tabular-nums text-xs">
-                        {uniFreq > 0 ? uniFreq.toLocaleString() : "—"}
-                      </span>
+                      <span className="text-zinc-600 tabular-nums text-xs w-8">{triFreq > 0 ? triFreq : "—"}</span>
+                    </div>
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-1">
+                      <div className="w-10 h-1 rounded-full bg-zinc-800 overflow-hidden">
+                        <div className="h-full bg-blue-600" style={{ width: `${biFreq > 0 ? (biFreq/maxBi)*100 : 0}%` }} />
+                      </div>
+                      <span className="text-zinc-600 tabular-nums text-xs w-8">{biFreq > 0 ? biFreq : "—"}</span>
+                    </div>
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-1">
+                      <div className="w-10 h-1 rounded-full bg-zinc-800 overflow-hidden">
+                        <div className="h-full bg-violet-600" style={{ width: `${uniFreq > 0 ? (uniFreq/maxUni)*100 : 0}%` }} />
+                      </div>
+                      <span className="text-zinc-600 tabular-nums text-xs w-8">{uniFreq > 0 ? uniFreq : "—"}</span>
                     </div>
                   </td>
                 </tr>

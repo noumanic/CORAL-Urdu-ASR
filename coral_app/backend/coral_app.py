@@ -83,7 +83,8 @@ def oov(req: OOVRequest):
 
         return {
             "oov_dict": list(oov_dict),
-            "metadata": metadata
+            "metadata": metadata,
+            "columns" : ["word","Dist","Trigram","Bigram","Unigram","Trifrequency","Bifrequency","Unifrequency"]
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
