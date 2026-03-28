@@ -74,7 +74,8 @@ def oov(req: OOVRequest):
             metadata.update(
                 extract_oov_metadata(
                     tree, con, oov_dict, sentence,
-                    depth=req.depth, top_n=req.top_n
+                    depth=req.depth, top_n=req.top_n,
+                    frequency_cutoff=req.freq_cutoff
                 )
             )
 

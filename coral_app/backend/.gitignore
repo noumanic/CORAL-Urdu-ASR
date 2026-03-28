@@ -1,5 +1,8 @@
 .env
 coral_data/
+test/
 test.py
 test.ipynb
 test_api.py
+__pycache__/
+.pytest_cache/

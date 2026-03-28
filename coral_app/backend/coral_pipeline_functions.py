@@ -53,7 +53,7 @@ def asr_aligner(ensemble: dict[str, str],source_model : str,weight_func : callab
 
     return align_info
 
-def extract_oov_metadata(tree, con, oov_dict, sentence, depth=50, top_n=10):
+def extract_oov_metadata(tree, con, oov_dict, sentence, depth=50, top_n=10,frequency_cutoff = 2000):
     tokens = sentence.split()
     n      = len(tokens)
     result = {}
@@ -101,13 +101,17 @@ def extract_oov_metadata(tree, con, oov_dict, sentence, depth=50, top_n=10):
                 grouped[w][2] += 1
                 grouped[w][5] += cnt
 
-        result[token] = {
-            w: tuple(meta)
-            for w, meta in sorted(
-                grouped.items(),
+        filtered = {
+            w: tuple(meta) for w, meta in grouped.items()
+            if meta[6] >= frequency_cutoff
+        }
+
+        result[token] = dict(
+            sorted(
+                filtered.items(),
                 key=lambda x: (x[1][0], -x[1][3], -x[1][1], -x[1][2], -x[1][4], -x[1][5], -x[1][6])
             )[:top_n]
-        }
+        )
 
     return result
 
