@@ -8,6 +8,7 @@ import duckdb
 import joblib
 import __main__
 from bktree import BKTree, BKNode
+from rapidfuzz.distance import Levenshtein
 from coral_data_downloader import *
 
 __main__.BKTree = BKTree
@@ -55,7 +56,8 @@ def align(req: AlignRequest):
     try:
         align_info = asr_aligner(
             ensemble=req.ensemble,
-            source_model=req.source_model
+            source_model=req.source_model,
+            weight_func=Levenshtein.normalized_distance
         )
         return align_info
     except Exception as e:
