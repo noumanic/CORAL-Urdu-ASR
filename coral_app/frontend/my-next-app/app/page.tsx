@@ -1,64 +1,128 @@
-import Image from "next/image";
+"use client";
+import { useState } from "react";
+import Pass1Input     from "./Pass1Input";
+import Pass2Sieve     from "./Pass2Sieve";
+import Pass3Correction from "./Pass3Correction";
+import { AlignInfo, OOVResult } from "./lib/api";
+ 
+const PASSES = [
+  { id: 1, label: "01", title: "Alignment",  subtitle: "Input & align model transcripts" },
+  { id: 2, label: "02", title: "OOV Scan",   subtitle: "Sieve scan for out-of-vocabulary tokens" },
+  { id: 3, label: "03", title: "Correction", subtitle: "Voting & candidate correction" },
+];
 
 export default function Home() {
+  const [activePass, setActivePass] = useState(1);
+  const [alignInfo,  setAlignInfo]  = useState<AlignInfo  | null>(null);
+  const [oovResult,  setOovResult]  = useState<OOVResult  | null>(null);
+
+  const handleAligned = (info: AlignInfo) => {
+    setAlignInfo(info);
+    setActivePass(2);
+  };
+
+  const handleOOV = (result: OOVResult) => {
+    setOovResult(result);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      {/* header */}
+      <header className="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur sticky top-0 z-50">
+        <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+            <span className="font-mono text-sm font-semibold tracking-widest text-zinc-100 uppercase">
+              CORAL
+            </span>
+            <span className="font-mono text-xs text-zinc-600 tracking-widest uppercase">
+              Urdu ASR Post-Correction
+            </span>
+          </div>
+          <div className="flex gap-1">
+            {PASSES.map(p => (
+              <button
+                key={p.id}
+                onClick={() => {
+                  if (p.id === 1) setActivePass(1);
+                  if (p.id === 2 && alignInfo) setActivePass(2);
+                  if (p.id === 3 && alignInfo && oovResult) setActivePass(3);
+                }}
+                className={`px-3 py-1 rounded font-mono text-xs tracking-widest transition-colors ${
+                  activePass === p.id
+                    ? "bg-zinc-800 text-zinc-100"
+                    : p.id === 2 && !alignInfo
+                    ? "text-zinc-700 cursor-not-allowed"
+                    : p.id === 3 && (!alignInfo || !oovResult)
+                    ? "text-zinc-700 cursor-not-allowed"
+                    : "text-zinc-500 hover:text-zinc-300"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      {/* pass header */}
+      <div className="border-b border-zinc-900 bg-zinc-950">
+        <div className="mx-auto max-w-5xl px-6 py-6">
+          <div className="flex items-baseline gap-4">
+            <span className="font-mono text-5xl font-bold text-zinc-800 select-none">
+              {PASSES[activePass - 1].label}
+            </span>
+            <div>
+              <h1 className="font-mono text-xl font-semibold text-zinc-100 tracking-tight">
+                {PASSES[activePass - 1].title}
+              </h1>
+              <p className="font-mono text-xs text-zinc-500 mt-0.5">
+                {PASSES[activePass - 1].subtitle}
+              </p>
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* pass progress */}
+      <div className="border-b border-zinc-900">
+        <div className="mx-auto max-w-5xl px-6">
+          <div className="flex">
+            {PASSES.map((p, i) => (
+              <div
+                key={p.id}
+                className={`flex-1 h-0.5 transition-colors ${
+                  p.id <= activePass ? "bg-cyan-600" : "bg-zinc-800"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* content */}
+      <main className="mx-auto max-w-5xl px-6 py-10">
+        {activePass === 1 && (
+          <Pass1Input onAligned={handleAligned} />
+        )}
+
+        {activePass === 2 && alignInfo && (
+          <div className="space-y-6">
+            <Pass2Sieve alignInfo={alignInfo} onOOVResult={handleOOV} />
+            {oovResult && (
+              <button
+                onClick={() => setActivePass(3)}
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-900 py-3 text-sm font-mono font-semibold text-zinc-300 uppercase tracking-widest transition-all hover:bg-zinc-800 hover:border-zinc-600"
+              >
+                PROCEED TO CORRECTION →
+              </button>
+            )}
+          </div>
+        )}
+
+        {activePass === 3 && alignInfo && oovResult && (
+          <Pass3Correction alignInfo={alignInfo} oovResult={oovResult} />
+        )}
       </main>
     </div>
   );
