@@ -1,18 +1,30 @@
-
+"use client";
 import { useState, useEffect, useRef } from "react";
-import { AlignInfo, OOVResult, OOVMetadata, CandidateMeta } from "./lib/api";
+import { AlignInfo, OOVResult, CandidateMeta } from "./lib/api";
+
+
+
+const MATCH_COLOR: Record<number, string> = {
+  0: "border-emerald-700 bg-emerald-950 text-emerald-200",
+  1: "border-blue-700   bg-blue-950   text-blue-200",
+  2: "border-red-700    bg-red-950    text-red-200",
+  3: "border-amber-700  bg-amber-950  text-amber-200",
+};
+
+const SIEVE_DELAY_MS = 220;
 
 interface Props {
-  alignInfo: AlignInfo;
+  alignInfo:   AlignInfo;
+  models:      string[];
   onOOVResult: (result: OOVResult) => void;
 }
 
-const SIEVE_DELAY_MS = 180;
-const MODELS = ["seamless_large", "whisper_large", "whisper_medium", "wav2vec_urdu"];
-
-export default function Pass2Sieve({ alignInfo, onOOVResult }: Props) {
-  const source       = alignInfo.source_model as string;
-  const sourceWords  = (alignInfo[source] as { normalized_attempt: string[] }).normalized_attempt;
+export default function Pass2Sieve({ alignInfo, models, onOOVResult }: Props) {
+  const source      = alignInfo.source_model as string;
+  const maxLen      = Math.max(...models.map(m => {
+    const d = alignInfo[m] as { attempt_alignment: string[] };
+    return d?.attempt_alignment.length ?? 0;
+  }));
 
   const [sievePos,    setSievePos]    = useState<number | null>(null);
   const [running,     setRunning]     = useState(false);
@@ -22,6 +34,25 @@ export default function Pass2Sieve({ alignInfo, onOOVResult }: Props) {
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const agreementAt = (pos: number): number => {
+    const words = models.map(m => {
+      const d = alignInfo[m] as { attempt_alignment: string[] };
+      return d?.attempt_alignment[pos] ?? null;
+    }).filter(Boolean);
+    if (!words.length) return 0;
+    const counts = words.reduce<Record<string, number>>((acc, w) => {
+      acc[w!] = (acc[w!] ?? 0) + 1; return acc;
+    }, {});
+    return Math.max(...Object.values(counts));
+  };
+
+  const opacityClass = (agreement: number) => {
+    if (agreement >= 4) return "opacity-100";
+    if (agreement === 3) return "opacity-75";
+    if (agreement === 2) return "opacity-50";
+    return "opacity-30";
+  };
 
   const fetchOOV = async () => {
     setLoading(true);
@@ -52,7 +83,7 @@ export default function Pass2Sieve({ alignInfo, onOOVResult }: Props) {
     intervalRef.current = setInterval(() => {
       setSievePos(p => {
         if (p === null) return null;
-        if (p >= sourceWords.length - 1) {
+        if (p >= maxLen - 1) {
           clearInterval(intervalRef.current!);
           setRunning(false);
           setDone(true);
@@ -62,12 +93,27 @@ export default function Pass2Sieve({ alignInfo, onOOVResult }: Props) {
       });
     }, SIEVE_DELAY_MS);
     return () => clearInterval(intervalRef.current!);
-  }, [running, sourceWords.length]);
+  }, [running, maxLen]);
 
   const isOOV = (word: string) => oovResult?.oov_dict.includes(word) ?? false;
 
   return (
     <div className="space-y-6">
+      {/* legend */}
+      <div className="flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs text-zinc-500">
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-950 border border-emerald-700 inline-block" />Match</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-amber-950  border border-amber-700  inline-block" />Substitution</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-950    border border-red-700    inline-block" />Deletion</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-blue-950   border border-blue-700   inline-block" />Insertion</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block w-6 border-b-2 border-dashed border-rose-500" />OOV</span>
+        <span className="flex items-center gap-1.5">
+          <span className="opacity-100 text-zinc-300 text-xs">▉</span>
+          <span className="opacity-50 text-zinc-300 text-xs">▉</span>
+          <span className="opacity-25 text-zinc-300 text-xs">▉</span>
+          Agreement
+        </span>
+      </div>
+
       <button
         onClick={startSieve}
         disabled={running || loading}
@@ -82,90 +128,71 @@ export default function Pass2Sieve({ alignInfo, onOOVResult }: Props) {
         </p>
       )}
 
-      {/* sieve animation */}
       {(running || done) && (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
-          <p className="mb-4 text-xs font-mono text-zinc-500 uppercase tracking-widest">
-            {running ? "Scanning tokens..." : "Scan complete — click OOV tokens to inspect"}
-          </p>
-          <div className="flex flex-wrap gap-2 justify-end" dir="rtl">
-            {sourceWords.map((word, i) => {
-              const isCurrent = sievePos === i;
-              const scanned   = done || (sievePos !== null && i < sievePos);
-              const oov       = scanned && isOOV(word);
-              const active    = activeToken === word;
+        <div className="rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden">
+          <div className="px-4 py-3 border-b border-zinc-800">
+            <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest">
+              {running ? "Scanning all models..." : "Scan complete — click OOV tokens to inspect"}
+            </p>
+          </div>
+
+          <div className="p-4 space-y-5">
+            {models.map(model => {
+              const mdata = alignInfo[model] as { attempt_alignment: string[]; attempt_matchinfo: number[] };
+              if (!mdata) return null;
+              const isSource = model === source;
 
               return (
-                <button
-                  key={i}
-                  onClick={() => oov && setActiveToken(active ? null : word)}
-                  className={[
-                    "relative px-3 py-2 rounded-lg font-urdu text-base border transition-all duration-200",
-                    isCurrent
-                      ? "border-violet-500 bg-violet-900 text-violet-100 scale-110 shadow-lg shadow-violet-900/50 z-10"
-                      : oov
-                      ? active
-                        ? "border-rose-400 bg-rose-900 text-rose-100 shadow-lg shadow-rose-900/50 cursor-pointer"
-                        : "border-rose-700 bg-rose-950 text-rose-300 cursor-pointer hover:border-rose-500 hover:bg-rose-900"
-                      : scanned
-                      ? "border-emerald-900 bg-emerald-950 text-emerald-300"
-                      : "border-zinc-800 bg-zinc-900 text-zinc-400",
-                  ].join(" ")}
-                >
-                  {word}
-                  {oov && (
-                    <span className="absolute -top-1.5 -right-1.5 w-3 h-3 rounded-full bg-rose-500 border border-zinc-950" />
-                  )}
-                </button>
+                <div key={model} className="space-y-1.5">
+                  <p className="text-xs font-mono text-zinc-600 uppercase tracking-widest">
+                    {isSource ? `★ ${model}` : model}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5" dir="rtl">
+                    {mdata.attempt_alignment.map((word, i) => {
+                      const mtype     = mdata.attempt_matchinfo[i] ?? 0;
+                      const isCurrent = sievePos === i;
+                      const scanned   = done || (sievePos !== null && i < sievePos);
+                      const oov       = scanned && isOOV(word);
+                      const agreement = scanned ? agreementAt(i) : 4;
+                      const active    = activeToken === word;
+
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => oov ? setActiveToken(active ? null : word) : undefined}
+                          disabled={!oov}
+                          className={[
+                            "relative px-2 py-1 rounded font-urdu text-sm border transition-all duration-150",
+                            isCurrent
+                              ? "border-violet-400 bg-violet-900 text-violet-100 scale-110 shadow-lg shadow-violet-900/60 z-10"
+                              : scanned
+                              ? `${MATCH_COLOR[mtype]} ${opacityClass(agreement)}`
+                              : "border-zinc-800 bg-zinc-900 text-zinc-600",
+                            oov && !isCurrent ? "cursor-pointer hover:brightness-125" : "",
+                            active ? "ring-2 ring-rose-400 ring-offset-1 ring-offset-zinc-950" : "",
+                          ].join(" ")}
+                          style={oov && scanned ? {
+                            textDecoration:        "underline",
+                            textDecorationStyle:   "dashed",
+                            textDecorationColor:   "#f43f5e",
+                            textUnderlineOffset:   "4px",
+                          } : undefined}
+                        >
+                            {word === '' || word === null? <span className="text-red-700 text-xs">∅</span>: word}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               );
             })}
           </div>
-          {/* model transcripts for context */}
-          {(running || done) && (
-            <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 space-y-3">
-              <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-2">
-                All Model Outputs
-              </p>
-              {MODELS.map(model => {
-                const mdata = alignInfo[model] as { normalized_attempt: string[]; attempt_matchinfo: number[] };
-                if (!mdata) return null;
-                return (
-                  <div key={model} className="flex items-start gap-3" dir="rtl">
-                    <span className="shrink-0 text-xs font-mono text-zinc-600 text-left w-28" dir="ltr">
-                      {model === alignInfo.source_model ? `★ ${model}` : model}
-                    </span>
-                    <div className="flex flex-wrap gap-1.5" dir="rtl">
-                      {mdata.normalized_attempt.map((word, i) => {
-                        const isSubstitution = mdata.attempt_matchinfo[i] === 3;
-                        const oov = done && isOOV(word);
-                        return (
-                          <span
-                            key={i}
-                            className={`px-2 py-1 rounded font-urdu text-sm border ${
-                              oov
-                                ? "border-rose-700 bg-rose-950 text-rose-300"
-                                : isSubstitution
-                                ? "border-amber-900 bg-amber-950 text-amber-400"
-                                : "border-zinc-800 bg-zinc-900 text-zinc-400"
-                            }`}
-                          >
-                            {word}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
 
-          {/* sieve progress bar */}
           {running && sievePos !== null && (
-            <div className="mt-4 h-1 rounded-full bg-zinc-800 overflow-hidden">
+            <div className="mx-4 mb-4 h-0.5 rounded-full bg-zinc-800 overflow-hidden">
               <div
-                className="h-full bg-violet-500 transition-all duration-150"
-                style={{ width: `${((sievePos + 1) / sourceWords.length) * 100}%` }}
+                className="h-full bg-violet-500 transition-all duration-200"
+                style={{ width: `${((sievePos + 1) / maxLen) * 100}%` }}
               />
             </div>
           )}
@@ -178,12 +205,12 @@ export default function Pass2Sieve({ alignInfo, onOOVResult }: Props) {
       )}
 
       {/* OOV summary */}
-      {done && oovResult && (
+      {done && oovResult && oovResult.oov_dict.length > 0 && (
         <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
           <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-3">
-            OOV Summary — {oovResult.oov_dict.length} token{oovResult.oov_dict.length !== 1 ? "s" : ""} flagged
+            {oovResult.oov_dict.length} OOV token{oovResult.oov_dict.length !== 1 ? "s" : ""} flagged — click to inspect
           </p>
-          <div className="flex flex-wrap gap-2 justify-end" dir="rtl">
+          <div className="flex flex-wrap gap-2" dir="rtl">
             {oovResult.oov_dict.map(word => (
               <button
                 key={word}
@@ -193,12 +220,22 @@ export default function Pass2Sieve({ alignInfo, onOOVResult }: Props) {
                     ? "border-rose-400 bg-rose-900 text-rose-100"
                     : "border-rose-800 bg-rose-950 text-rose-400 hover:border-rose-600"
                 }`}
+                style={{
+                  textDecoration:      "underline",
+                  textDecorationStyle: "dashed",
+                  textDecorationColor: "#f43f5e",
+                  textUnderlineOffset: "4px",
+                }}
               >
                 {word}
               </button>
             ))}
           </div>
         </div>
+      )}
+
+      {done && oovResult && oovResult.oov_dict.length === 0 && (
+        <p className="text-sm font-mono text-emerald-400">✓ No OOV tokens detected</p>
       )}
     </div>
   );
@@ -207,23 +244,27 @@ export default function Pass2Sieve({ alignInfo, onOOVResult }: Props) {
 function CandidatePanel({ token, metadata }: { token: string; metadata: Record<string, CandidateMeta> }) {
   return (
     <div className="rounded-xl border border-rose-900 bg-zinc-950 overflow-hidden">
-      <div className="px-4 py-3 border-b border-rose-900 bg-rose-950/30">
-        <p className="font-mono text-xs text-rose-400 uppercase tracking-widest">
-          Candidates for <span className="font-urdu text-rose-200 text-base normal-case">{token}</span>
-        </p>
+      <div className="px-4 py-3 border-b border-rose-900 bg-rose-950/20 flex items-center gap-3">
+        <p className="font-mono text-xs text-rose-400 uppercase tracking-widest">Candidates for</p>
+        <span
+          className="font-urdu text-rose-200 text-lg"
+          style={{ textDecoration: "underline", textDecorationStyle: "dashed", textDecorationColor: "#f43f5e", textUnderlineOffset: "4px" }}
+        >
+          {token}
+        </span>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm font-mono">
           <thead>
-            <tr className="border-b border-zinc-800">
-              <th className="px-4 py-2 text-right text-zinc-500 font-normal">Word</th>
-              <th className="px-3 py-2 text-center text-zinc-500 font-normal">Dist</th>
-              <th className="px-3 py-2 text-center text-zinc-500 font-normal">Tri</th>
-              <th className="px-3 py-2 text-center text-zinc-500 font-normal">Bi</th>
-              <th className="px-3 py-2 text-center text-zinc-500 font-normal">Uni</th>
-              <th className="px-4 py-2 text-right text-zinc-500 font-normal">Tri Freq</th>
-              <th className="px-4 py-2 text-right text-zinc-500 font-normal">Bi Freq</th>
-              <th className="px-4 py-2 text-right text-zinc-500 font-normal">Uni Freq</th>
+            <tr className="border-b border-zinc-800 text-zinc-500">
+              <th className="px-4 py-2 text-right font-normal">Word</th>
+              <th className="px-3 py-2 text-center font-normal">Dist</th>
+              <th className="px-3 py-2 text-center font-normal">Tri</th>
+              <th className="px-3 py-2 text-center font-normal">Bi</th>
+              <th className="px-3 py-2 text-center font-normal">Uni</th>
+              <th className="px-4 py-2 text-right font-normal">Tri Freq</th>
+              <th className="px-4 py-2 text-right font-normal">Bi Freq</th>
+              <th className="px-4 py-2 text-right font-normal">Uni Freq</th>
             </tr>
           </thead>
           <tbody>
@@ -231,10 +272,10 @@ function CandidatePanel({ token, metadata }: { token: string; metadata: Record<s
               const [dist, tri, bi, uni, triFreq, biFreq, uniFreq] = meta;
               const isTop = i === 0;
               return (
-                <tr key={word} className={`border-b border-zinc-900 ${isTop ? "bg-zinc-900/60" : "hover:bg-zinc-900/30"}`}>
+                <tr key={word} className={`border-b border-zinc-900 ${isTop ? "bg-zinc-900/60" : "hover:bg-zinc-900/20"}`}>
                   <td className="px-4 py-2 text-right font-urdu text-base">
                     {isTop && <span className="mr-2 text-xs text-amber-400">★</span>}
-                    <span className={isTop ? "text-zinc-100" : "text-zinc-300"}>{word}</span>
+                    <span className={isTop ? "text-zinc-100" : "text-zinc-400"}>{word}</span>
                   </td>
                   <td className="px-3 py-2 text-center">
                     <span className={`px-1.5 rounded text-xs ${dist === 0 ? "text-emerald-400" : dist === 1 ? "text-amber-400" : "text-red-400"}`}>

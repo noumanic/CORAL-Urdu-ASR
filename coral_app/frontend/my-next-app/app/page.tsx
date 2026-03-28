@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
-import Pass1Input     from "./Pass1Input";
-import Pass2Sieve     from "./Pass2Sieve";
+import Pass1Input      from "./Pass1Input";
+import Pass2Sieve      from "./Pass2Sieve";
 import Pass3Correction from "./Pass3Correction";
 import { AlignInfo, OOVResult } from "./lib/api";
- 
+
 const PASSES = [
   { id: 1, label: "01", title: "Alignment",  subtitle: "Input & align model transcripts" },
   { id: 2, label: "02", title: "OOV Scan",   subtitle: "Sieve scan for out-of-vocabulary tokens" },
@@ -16,8 +16,14 @@ export default function Home() {
   const [alignInfo,  setAlignInfo]  = useState<AlignInfo  | null>(null);
   const [oovResult,  setOovResult]  = useState<OOVResult  | null>(null);
 
+  // derive dynamic model list from alignInfo
+  const models = alignInfo
+    ? Object.keys(alignInfo).filter(k => k !== "source_model")
+    : [];
+
   const handleAligned = (info: AlignInfo) => {
     setAlignInfo(info);
+    setOovResult(null);
     setActivePass(2);
   };
 
@@ -32,10 +38,8 @@ export default function Home() {
         <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="font-mono text-sm font-semibold tracking-widest text-zinc-100 uppercase">
-              CORAL
-            </span>
-            <span className="font-mono text-xs text-zinc-600 tracking-widest uppercase">
+            <span className="font-mono text-sm font-semibold tracking-widest text-zinc-100 uppercase">CORAL</span>
+            <span className="font-mono text-xs text-zinc-600 tracking-widest uppercase hidden sm:block">
               Urdu ASR Post-Correction
             </span>
           </div>
@@ -51,9 +55,7 @@ export default function Home() {
                 className={`px-3 py-1 rounded font-mono text-xs tracking-widest transition-colors ${
                   activePass === p.id
                     ? "bg-zinc-800 text-zinc-100"
-                    : p.id === 2 && !alignInfo
-                    ? "text-zinc-700 cursor-not-allowed"
-                    : p.id === 3 && (!alignInfo || !oovResult)
+                    : (p.id === 2 && !alignInfo) || (p.id === 3 && (!alignInfo || !oovResult))
                     ? "text-zinc-700 cursor-not-allowed"
                     : "text-zinc-500 hover:text-zinc-300"
                 }`}
@@ -84,16 +86,14 @@ export default function Home() {
         </div>
       </div>
 
-      {/* pass progress */}
+      {/* progress bar */}
       <div className="border-b border-zinc-900">
         <div className="mx-auto max-w-5xl px-6">
           <div className="flex">
-            {PASSES.map((p, i) => (
+            {PASSES.map(p => (
               <div
                 key={p.id}
-                className={`flex-1 h-0.5 transition-colors ${
-                  p.id <= activePass ? "bg-cyan-600" : "bg-zinc-800"
-                }`}
+                className={`flex-1 h-0.5 transition-colors ${p.id <= activePass ? "bg-cyan-600" : "bg-zinc-800"}`}
               />
             ))}
           </div>
@@ -108,7 +108,7 @@ export default function Home() {
 
         {activePass === 2 && alignInfo && (
           <div className="space-y-6">
-            <Pass2Sieve alignInfo={alignInfo} onOOVResult={handleOOV} />
+            <Pass2Sieve alignInfo={alignInfo} models={models} onOOVResult={handleOOV} />
             {oovResult && (
               <button
                 onClick={() => setActivePass(3)}
