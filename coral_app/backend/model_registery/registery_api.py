@@ -19,18 +19,16 @@ Env vars (put in .env):
   ALLOWED_HOSTS     — comma-separated ngrok domain allowlist e.g. "ngrok-free.app,ngrok.io"
 """
 import sys, os
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
 import asyncio
 import logging
-import os
 import time
 from contextlib import asynccontextmanager
 
 import httpx
 from dotenv import load_dotenv
-from fastapi import (BackgroundTasks, Depends, FastAPI, File, Form,
-                     HTTPException, Security, UploadFile)
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import (Depends, FastAPI, File, Form, HTTPException, Security, UploadFile)
 from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel, validator
 
@@ -40,25 +38,25 @@ log = logging.getLogger("coral")
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-REGISTRY_SECRET  = os.getenv("REGISTRY_SECRET", "change-me-registry")
-API_SECRET       = os.getenv("API_SECRET",       "change-me-api")
-EVICT_AFTER_SEC  = int(os.getenv("EVICT_AFTER_SEC", "300"))   # 5 minutes
-MAX_AUDIO_MB     = int(os.getenv("MAX_AUDIO_MB",    "25"))
-PING_SWEEP_SEC   = 15   # how often the eviction sweep runs
-ALLOWED_HOSTS    = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "ngrok-free.app,ngrok.io").split(",")]
+REGISTRY_SECRET = os.getenv("REGISTRY_SECRET", "change-me-registry")
+API_SECRET      = os.getenv("API_SECRET",       "change-me-api")
+EVICT_AFTER_SEC = int(os.getenv("EVICT_AFTER_SEC", "300"))
+MAX_AUDIO_MB    = int(os.getenv("MAX_AUDIO_MB",    "25"))
+PING_SWEEP_SEC  = 15
+ALLOWED_HOSTS   = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "ngrok-free.app,ngrok.io").split(",")]
 
 # ── Registry ──────────────────────────────────────────────────────────────────
 
 class ModelEntry(BaseModel):
-    name:          str
-    endpoint:      str        # full URL to POST audio to on the Kaggle side
-    last_ping:     float      # unix timestamp
-    session_id:    str        # lets one Kaggle notebook register multiple models
+    name:       str
+    endpoint:   str
+    last_ping:  float
+    session_id: str
 
-registry: dict[str, ModelEntry] = {}   # keyed by model name
-registry_lock = asyncio.Lock()
+registry:      dict[str, ModelEntry] = {}
+registry_lock: asyncio.Lock          = None  # initialised in lifespan
 
-# ── Auth headers ──────────────────────────────────────────────────────────────
+# ── Auth ──────────────────────────────────────────────────────────────────────
 
 registry_header = APIKeyHeader(name="X-Registry-Token", auto_error=False)
 api_header      = APIKeyHeader(name="X-API-Token",      auto_error=False)
@@ -76,30 +74,17 @@ def require_api_token(token: str = Security(api_header)):
 async def eviction_sweep():
     while True:
         await asyncio.sleep(PING_SWEEP_SEC)
-        now     = time.time()
-        cutoff  = now - EVICT_AFTER_SEC
+        now    = time.time()
+        cutoff = now - EVICT_AFTER_SEC
         async with registry_lock:
             evicted = [name for name, e in registry.items() if e.last_ping < cutoff]
             for name in evicted:
                 del registry[name]
                 log.info(f"Evicted model: {name}")
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    task = asyncio.create_task(eviction_sweep())
-    yield
-    task.cancel()
-
 # ── App ───────────────────────────────────────────────────────────────────────
 
-app = FastAPI(title="CORAL Registry", lifespan=lifespan)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],   # tighten in production
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = FastAPI(title="CORAL Registry")
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
 
@@ -130,28 +115,27 @@ class PingRequest(BaseModel):
     session_id: str
 
 class ModelInfo(BaseModel):
-    name:       str
-    session_id: str
-    last_ping:  float
+    name:          str
+    session_id:    str
+    last_ping_ago: float  # seconds since last ping
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @app.get("/models", response_model=list[ModelInfo])
 async def list_models():
-    """Returns all currently live models. Poll this from the frontend."""
+    now = time.time()
     async with registry_lock:
         return [
-            ModelInfo(name=e.name, session_id=e.session_id, last_ping=e.last_ping)
+            ModelInfo(
+                name=e.name,
+                session_id=e.session_id,
+                last_ping_ago=round(now - e.last_ping, 1),
+            )
             for e in registry.values()
         ]
 
-
 @app.post("/register", dependencies=[Depends(require_registry_token)])
 async def register_model(req: RegisterRequest):
-    """
-    Called by Kaggle notebook on boot (after ngrok is up).
-    One session_id can register multiple models.
-    """
     async with registry_lock:
         registry[req.name] = ModelEntry(
             name=req.name,
@@ -162,14 +146,8 @@ async def register_model(req: RegisterRequest):
     log.info(f"Registered: {req.name} @ {req.endpoint} (session={req.session_id})")
     return {"status": "registered", "name": req.name}
 
-
 @app.post("/ping", dependencies=[Depends(require_registry_token)])
 async def ping(req: PingRequest):
-    """
-    Called every 5s by Kaggle notebook.
-    Rejects ping if session_id doesn't match what was registered
-    (prevents a rogue actor from keeping someone else's model alive).
-    """
     async with registry_lock:
         entry = registry.get(req.name)
         if not entry:
@@ -179,22 +157,13 @@ async def ping(req: PingRequest):
         entry.last_ping = time.time()
     return {"status": "ok"}
 
-
 @app.post("/transcribe", dependencies=[Depends(require_api_token)])
 async def transcribe(
     audio:        UploadFile = File(...),
     source_model: str        = Form(...),
-    whitelist:    str        = Form(...),   # comma-separated model names
+    whitelist:    str        = Form(...),
 ):
-    """
-    Frontend sends mp3 + source_model + whitelist.
-    Backend fans out to all live whitelisted models in parallel,
-    returns transcripts keyed by model name.
-    """
-    # ── Validate audio ────────────────────────────────────────────────────────
-    if audio.content_type not in ("audio/mpeg", "audio/mp3", "audio/x-mpeg"):
-        raise HTTPException(status_code=400, detail="Only mp3 files accepted")
-
+    # ── Validate audio size only — content-type is unreliable ────────────────
     audio_bytes = await audio.read()
     max_bytes   = MAX_AUDIO_MB * 1024 * 1024
     if len(audio_bytes) > max_bytes:
@@ -219,7 +188,7 @@ async def transcribe(
     # ── Fan out in parallel ───────────────────────────────────────────────────
     async def call_model(name: str, entry: ModelEntry) -> tuple[str, str | None, str | None]:
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=60.0) as client:
                 resp = await client.post(
                     entry.endpoint,
                     files={"audio": (audio.filename, audio_bytes, "audio/mpeg")},
@@ -228,6 +197,9 @@ async def transcribe(
                 resp.raise_for_status()
                 data = resp.json()
                 return name, data.get("transcript"), None
+        except httpx.TimeoutException:
+            log.warning(f"Model {name} timed out")
+            return name, None, "Request timed out after 60s"
         except Exception as e:
             log.warning(f"Model {name} failed: {e}")
             return name, None, str(e)
@@ -246,7 +218,7 @@ async def transcribe(
         raise HTTPException(status_code=502, detail=f"All models failed: {errors}")
 
     return {
-        "transcripts":   transcripts,
-        "source_model":  source_model,
-        "errors":        errors or None,   # None if all succeeded
+        "transcripts":  transcripts,
+        "source_model": source_model,
+        "errors":       errors or None,
     }

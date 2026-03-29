@@ -1,4 +1,5 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const HF_TOKEN = process.env.NEXT_PUBLIC_HF_TOKEN;
+const BASE = process.env.NEXT_PUBLIC_API_URL;
 
 export interface AlignRequest {
   ensemble: Record<string, string>;
@@ -56,7 +57,10 @@ export const api = {
   async align(req: AlignRequest): Promise<AlignInfo> {
     const r = await fetch(`${BASE}/align`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+         "Content-Type": "application/json",
+         "Authorization" : `Bearer ${HF_TOKEN}`
+      },
       body: JSON.stringify(req),
     });
     if (!r.ok) throw new Error(await r.text());
@@ -66,7 +70,10 @@ export const api = {
   async oov(req: OOVRequest): Promise<OOVResult> {
     const r = await fetch(`${BASE}/oov`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+         "Content-Type": "application/json",
+         "Authorization" : `Bearer ${HF_TOKEN}`
+      },
       body: JSON.stringify(req),
     });
     if (!r.ok) throw new Error(await r.text());
@@ -76,7 +83,10 @@ export const api = {
   async correct(req: CorrectRequest): Promise<CorrectionResult> {
     const r = await fetch(`${BASE}/correct`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+         "Content-Type": "application/json",
+         "Authorization" : `Bearer ${HF_TOKEN}`
+      },
       body: JSON.stringify(req),
     });
     if (!r.ok) throw new Error(await r.text());
