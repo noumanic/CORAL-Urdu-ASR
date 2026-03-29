@@ -1,4 +1,5 @@
-# main.py
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -13,9 +14,9 @@ from coral_data_downloader import *
 
 __main__.BKTree = BKTree
 __main__.BKNode = BKNode
-
+BASE_DIR = os.path.dirname(__file__)
 con = duckdb.connect()
-tree = joblib.load('coral_data/bk_tree.joblib')
+tree = joblib.load(f"{BASE_DIR}/coral_data/bk_tree.joblib")
 
 from coral_pipeline_functions import (
     asr_aligner,

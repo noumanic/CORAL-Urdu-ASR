@@ -1,5 +1,6 @@
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from coral_utility_functions import *
-from bktree import BKTree,BKNode
 from collections import Counter
 
 def asr_aligner(ensemble: dict[str, str],source_model : str,weight_func : callable = levenshtein,deletion_cost : float = 1.0,insertion_cost : float = 1.0) -> dict[str, dict[str , list[str]]] | dict:

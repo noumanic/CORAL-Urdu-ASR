@@ -1,17 +1,16 @@
+import sys, os
+sys.path.insert(0, os.path.dirname(__file__))
 import os
 import requests
 from pathlib import Path
 from huggingface_hub import login
 from dotenv import load_dotenv
-from bktree import BKNode,BKTree
-import duckdb
-import joblib
 load_dotenv()
-
+BASE_DIR = os.path.dirname(__file__)
 BUCKET_URL = os.environ.get("BUCKET_URL")
 HF_TOKEN   = os.environ.get("HF_TOKEN")
 REPO_ID    = os.environ.get("REPO_ID")
-CACHE_DIR  = Path("coral_data")
+CACHE_DIR  = Path(f"{BASE_DIR}/coral_data")
 CACHE_DIR.mkdir(exist_ok=True)
 
 login(token = HF_TOKEN)
