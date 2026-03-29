@@ -42,7 +42,7 @@ REGISTRY_SECRET = os.getenv("REGISTRY_SECRET", "change-me-registry")
 API_SECRET      = os.getenv("API_SECRET",       "change-me-api")
 EVICT_AFTER_SEC = int(os.getenv("EVICT_AFTER_SEC", "300"))
 MAX_AUDIO_MB    = int(os.getenv("MAX_AUDIO_MB",    "25"))
-PING_SWEEP_SEC  = 15
+PING_SWEEP_SEC  = 20
 ALLOWED_HOSTS   = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "ngrok-free.app,ngrok.io").split(",")]
 
 # ── Registry ──────────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ class ModelEntry(BaseModel):
     session_id: str
 
 registry:      dict[str, ModelEntry] = {}
-registry_lock: asyncio.Lock          = None  # initialised in lifespan
+registry_lock = asyncio.Lock()
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 

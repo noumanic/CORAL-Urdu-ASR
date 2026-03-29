@@ -8,8 +8,6 @@ import model_registery.registery_api as registry_module
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialise the async lock here — inside a running event loop
-    registry_module.registry_lock = asyncio.Lock()
     task = asyncio.create_task(eviction_sweep())
     yield
     task.cancel()
