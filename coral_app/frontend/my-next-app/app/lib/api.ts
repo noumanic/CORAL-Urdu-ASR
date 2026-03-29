@@ -1,5 +1,7 @@
 const HF_TOKEN = process.env.NEXT_PUBLIC_HF_TOKEN;
 const BASE = process.env.NEXT_PUBLIC_API_URL;
+const REGISTRY_BASE = `${process.env.NEXT_PUBLIC_API_URL}/registry`;
+const API_SECRET    = process.env.NEXT_PUBLIC_API_SECRET;
 
 export interface AlignRequest {
   ensemble: Record<string, string>;
@@ -38,6 +40,18 @@ export type CandidateMeta = [
   number, // bi_freq
   number  // uni_freq
 ];
+
+export interface LiveModel {
+  name:          string;
+  session_id:    string;
+  last_ping_ago: number;
+}
+
+export interface TranscribeResult {
+  transcripts:  Record<string, string>;
+  source_model: string;
+  errors:       Record<string, string> | null;
+}
 
 export type OOVMetadata = Record<string, Record<string, CandidateMeta>>;
 
@@ -92,4 +106,27 @@ export const api = {
     if (!r.ok) throw new Error(await r.text());
     return r.json();
   },
+  async models(): Promise<LiveModel[]> {
+      const r = await fetch(`${REGISTRY_BASE}/models`, {
+        headers: { "Authorization": `Bearer ${HF_TOKEN}` },
+      });
+      if (!r.ok) throw new Error(await r.text());
+      return r.json();
+    },
+  async transcribe(audio: Blob, filename: string, source_model: string, whitelist: string[]): Promise<TranscribeResult> {
+    const formData = new FormData();
+    formData.append("audio", audio, filename);
+    formData.append("source_model", source_model);
+    formData.append("whitelist", whitelist.join(","));
+    const r = await fetch(`${REGISTRY_BASE}/transcribe`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${HF_TOKEN}`,
+        "X-Api-Token":   API_SECRET ?? "",
+      },
+      body: formData,
+    });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  }
 };
