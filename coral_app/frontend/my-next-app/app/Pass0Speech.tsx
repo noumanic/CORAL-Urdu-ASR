@@ -47,7 +47,7 @@ export default function Pass0Speech({ onAligned }: Props) {
       }
     };
     fetchModels();
-    const interval = setInterval(fetchModels, 10000);
+    const interval = setInterval(fetchModels, 40000);
     return () => clearInterval(interval);
   }, []);
 
