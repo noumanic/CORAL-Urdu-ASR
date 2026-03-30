@@ -130,7 +130,7 @@ def build_oov_dict(tree, align_info, freq_cutoff=2000):
 def apply_corrections(align_info, oov_metadata):
     source       = align_info['source_model']
     model_names  = [k for k in align_info if k != 'source_model']
-    source_words = align_info[source]['normalized_attempt']
+    source_words = align_info[source]['attempt_alignment']
     n            = len(source_words)
     corrected    = []
 
@@ -146,7 +146,7 @@ def apply_corrections(align_info, oov_metadata):
         # ── substitution voting — use normalized_attempt directly ─────────────
         votes = Counter()
         for model in model_names:
-            words     = align_info[model]['normalized_attempt']
+            words     = align_info[model]['attempt_alignment']
             matchinfo = align_info[model]['attempt_matchinfo']
             if i >= len(words) or i >= len(matchinfo):
                 continue
