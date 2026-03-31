@@ -149,10 +149,14 @@ def apply_corrections(align_info, oov_metadata):
         for model in model_names:
             words     = align_info[model]['attempt_alignment']
             matchinfo = align_info[model]['attempt_matchinfo']
-            if i >= len(words) or i >= len(matchinfo):
+            if (i + voting_skip[model]) >= len(words):
                 continue
             while (matchinfo[i + voting_skip[model]] == DELETION or matchinfo[i + voting_skip[model]] == INSERTION):
                 voting_skip[model] = voting_skip[model] + 1
+                if (i + voting_skip[model]) >= len(words):
+                    break
+            if (i + voting_skip[model]) >= len(words):
+                continue
             if matchinfo[i + voting_skip[model]] == SUBSTITUTION or matchinfo[i + voting_skip[model]] == MATCH:
                 votes[words[i + voting_skip[model]]] += 1
 
