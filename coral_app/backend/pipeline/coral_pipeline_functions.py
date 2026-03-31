@@ -130,6 +130,7 @@ def build_oov_dict(tree, align_info, freq_cutoff=2000):
 def apply_corrections(align_info, oov_metadata):
     source       = align_info['source_model']
     model_names  = [k for k in align_info if k != 'source_model']
+    voting_skip  = {k : 0 for k in align_info if k != 'source_model'}
     source_words = align_info[source]['attempt_alignment']
     n            = len(source_words)
     corrected    = []
@@ -150,10 +151,10 @@ def apply_corrections(align_info, oov_metadata):
             matchinfo = align_info[model]['attempt_matchinfo']
             if i >= len(words) or i >= len(matchinfo):
                 continue
-            if matchinfo[i] == DELETION or matchinfo[i] == INSERTION:
-                continue
-            if matchinfo[i] == SUBSTITUTION or matchinfo[i] == MATCH:
-                votes[words[i]] += 1
+            while (matchinfo[i] == DELETION or matchinfo[i] == INSERTION):
+                voting_skip[model] = voting_skip[model] + 1
+            if matchinfo[i + voting_skip[model]] == SUBSTITUTION or matchinfo[i + voting_skip[model]] == MATCH:
+                votes[words[i + voting_skip[model]]] += 1
 
         if not votes:
             corrected.append(source_word)
