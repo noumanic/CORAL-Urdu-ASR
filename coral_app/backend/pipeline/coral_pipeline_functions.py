@@ -150,7 +150,7 @@ def apply_corrections(align_info, oov_metadata):
             matchinfo = align_info[model]['attempt_matchinfo']
             if i >= len(words) or i >= len(matchinfo):
                 continue
-            if matchinfo[i] == DELETION:
+            if matchinfo[i] == DELETION or matchinfo[i] == INSERTION:
                 continue
             if matchinfo[i] == SUBSTITUTION or matchinfo[i] == MATCH:
                 votes[words[i]] += 1
