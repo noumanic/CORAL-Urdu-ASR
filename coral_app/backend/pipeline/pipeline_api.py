@@ -5,17 +5,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 
-import duckdb
 import joblib
 import __main__
 from bktree import BKTree, BKNode
 from rapidfuzz.distance import Levenshtein
 from coral_data_downloader import *
 
+import duckdb
+con = duckdb.connect(f"{BASE_DIR}/coral_data/ngrams.duckdb")
+load_ngrams(con=con,count=5)
+
 __main__.BKTree = BKTree
 __main__.BKNode = BKNode
 BASE_DIR = os.path.dirname(__file__)
-con = duckdb.connect()
+
 tree = joblib.load(f"{BASE_DIR}/coral_data/bk_tree.joblib")
 
 from coral_pipeline_functions import (

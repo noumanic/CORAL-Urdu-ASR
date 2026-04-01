@@ -5,6 +5,7 @@ import requests
 from pathlib import Path
 from huggingface_hub import login
 from dotenv import load_dotenv
+
 load_dotenv()
 BASE_DIR = os.path.dirname(__file__)
 BUCKET_URL = os.environ.get("BUCKET_URL")
@@ -21,8 +22,7 @@ FILES = [
     "bk_tree.joblib",
     "trigram_left.parquet",
     "trigram_middle.parquet",
-    "trigram_right.parquet",
-    "unigram_counts.parquet",
+    "trigram_right.parquet"
 ]
 
 def download_file(fname):
@@ -43,4 +43,29 @@ def download_file(fname):
 print("Downloading dataset...")
 local_paths = {fname: download_file(fname) for fname in FILES}
 print("Downloading complete...")
-print("Loading functions")
+
+def load_ngrams(con,count = 5):
+    existing = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
+    
+    for name, file, key_cols in [
+        ("bigram_forward",  "bigram_forward.parquet",  "k0"),
+        ("bigram_backward", "bigram_backward.parquet", "k0"),
+        ("trigram_left",    "trigram_left.parquet",    "k0, k1"),
+        ("trigram_middle",  "trigram_middle.parquet",  "k0, k1"),
+        ("trigram_right",   "trigram_right.parquet",   "k0, k1"),
+    ]:
+        if name in existing:
+            print(f"  ⏭ {name} already loaded")
+            continue
+        path = CACHE_DIR / file
+        print(f"  Loading {file}...")
+        con.execute(f"""
+            CREATE TABLE {name} AS
+            SELECT * FROM read_parquet('{path}') WHERE cnt >= {count}
+        """)
+        con.execute(f"CREATE INDEX idx_{name} ON {name} ({key_cols})")
+        rows = con.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0]
+        print(f"    ✅ {rows:,} rows")
+
+    print("All ngrams ready ✅")
+

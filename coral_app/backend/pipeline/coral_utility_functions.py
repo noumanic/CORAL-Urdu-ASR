@@ -66,35 +66,33 @@ def is_oov(tree, word, freq_cutoff=2000):
 def get_bk_candidates(tree, word, edit_distance_threshold, top_n):
     return tuple(tree.search(word, edit_distance_threshold)[:top_n])
 
-def get_trigram_candidates(con, ngram_tuple, top_n):
-    w0, w1, w2 = ngram_tuple
-    if w0 is None:
-        res = con.execute(f"""
-            SELECT v, cnt FROM read_parquet(f"{BASE_DIR}/{CORAL_DATA}/trigram_left.parquet")
-            WHERE k0 = ? AND k1 = ? ORDER BY cnt DESC LIMIT ?
-        """, [w1, w2, top_n]).fetchall()
-    elif w2 is None:
-        res = con.execute(f"""
-            SELECT v, cnt FROM read_parquet(f"{BASE_DIR}/{CORAL_DATA}/trigram_right.parquet")
-            WHERE k0 = ? AND k1 = ? ORDER BY cnt DESC LIMIT ?
-        """, [w0, w1, top_n]).fetchall()
-    else:
-        res = con.execute(f"""
-            SELECT v, cnt FROM read_parquet('{BASE_DIR}/{CORAL_DATA}/trigram_middle.parquet')
-            WHERE k0 = ? AND k1 = ? ORDER BY cnt DESC LIMIT ?
-        """, [w0, w2, top_n]).fetchall()
-    return tuple(res)
-
 def get_bigram_candidates(con, ngram_tuple, top_n):
     w0, w1 = ngram_tuple
     if w1 is None:
-        res = con.execute(f"""
-            SELECT v, cnt FROM read_parquet('{BASE_DIR}/{CORAL_DATA}/bigram_forward.parquet')
+        return tuple(con.execute("""
+            SELECT v, cnt FROM bigram_forward
             WHERE k0 = ? ORDER BY cnt DESC LIMIT ?
-        """, [w0, top_n]).fetchall()
+        """, [w0, top_n]).fetchall())
     else:
-        res = con.execute(f"""
-            SELECT v, cnt FROM read_parquet('{BASE_DIR}/{CORAL_DATA}/bigram_backward.parquet')
+        return tuple(con.execute("""
+            SELECT v, cnt FROM bigram_backward
             WHERE k0 = ? ORDER BY cnt DESC LIMIT ?
-        """, [w1, top_n]).fetchall()
-    return tuple(res)
+        """, [w1, top_n]).fetchall())
+
+def get_trigram_candidates(con, ngram_tuple, top_n):
+    w0, w1, w2 = ngram_tuple
+    if w0 is None:
+        return tuple(con.execute("""
+            SELECT v, cnt FROM trigram_left
+            WHERE k0 = ? AND k1 = ? ORDER BY cnt DESC LIMIT ?
+        """, [w1, w2, top_n]).fetchall())
+    elif w2 is None:
+        return tuple(con.execute("""
+            SELECT v, cnt FROM trigram_right
+            WHERE k0 = ? AND k1 = ? ORDER BY cnt DESC LIMIT ?
+        """, [w0, w1, top_n]).fetchall())
+    else:
+        return tuple(con.execute("""
+            SELECT v, cnt FROM trigram_middle
+            WHERE k0 = ? AND k1 = ? ORDER BY cnt DESC LIMIT ?
+        """, [w0, w2, top_n]).fetchall())

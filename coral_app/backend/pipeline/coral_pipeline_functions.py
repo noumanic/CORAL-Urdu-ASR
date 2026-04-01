@@ -54,7 +54,7 @@ def asr_aligner(ensemble: dict[str, str],source_model : str,weight_func : callab
 
     return align_info
 
-def extract_oov_metadata(tree, con, oov_dict, sentence, depth=50, top_n=10,frequency_cutoff = 2000):
+def extract_oov_metadata(tree,con, oov_dict, sentence, depth=50, top_n=10,frequency_cutoff = 2000):
     tokens = sentence.split()
     n      = len(tokens)
     result = {}
@@ -73,7 +73,7 @@ def extract_oov_metadata(tree, con, oov_dict, sentence, depth=50, top_n=10,frequ
             grouped[w] = [dist, 0, 0, 1 if uni_freq > 0 else 0, 0, 0, uni_freq]
 
         if left and right:
-            for w, cnt in get_trigram_candidates(con, (left, None, right), depth):
+            for w, cnt in get_trigram_candidates(con ,(left, None, right), depth):
                 dist = Levenshtein.distance(w, token)
                 if dist > threshold:
                     continue
@@ -83,7 +83,7 @@ def extract_oov_metadata(tree, con, oov_dict, sentence, depth=50, top_n=10,frequ
                 grouped[w][4] += cnt
 
         if left:
-            for w, cnt in get_bigram_candidates(con, (left, None), depth):
+            for w, cnt in get_bigram_candidates(con ,(left, None), depth):
                 dist = Levenshtein.distance(w, token)
                 if dist > threshold:
                     continue
