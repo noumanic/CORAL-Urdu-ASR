@@ -1,7 +1,7 @@
-const HF_TOKEN = process.env.HF_TOKEN;
-const BASE = process.env.API_URL;
-const REGISTRY_BASE = `${process.env.API_URL}/registry`;
-const API_SECRET    = process.env.API_SECRET;
+const HF_TOKEN = process.env.NEXT_PUBLIC_HF_TOKEN;
+const BASE = process.env.NEXT_PUBLIC_API_URL;
+const REGISTRY_BASE = `${process.env.NEXT_PUBLIC_API_URL}/registry`;
+const API_SECRET    = process.env.NEXT_PUBLIC_API_SECRET;
 
 export interface AlignRequest {
   ensemble: Record<string, string>;
