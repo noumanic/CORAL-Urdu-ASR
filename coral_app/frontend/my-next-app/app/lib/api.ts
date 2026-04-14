@@ -67,7 +67,29 @@ export interface CorrectionResult {
   diff: { pos: number; original: string; corrected: string }[];
 }
 
+export interface ModelAlign {
+  normalized_attempt: string[];
+  attempt_alignment: string[];
+  attempt_matchinfo: number[];
+  split_merge_attempt: string[];      // add
+  split_merge_matchinfo: number[];    // add
+  split_merge?: object;               // add (for animations)
+}
+
+export interface SplitMergeRequest {
+  align_info: AlignInfo;
+}
+
 export const api = {
+  async splitMerge(req: SplitMergeRequest): Promise<AlignInfo> {
+    const r = await fetch(`${BASE}/split-merge`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${HF_TOKEN}` },
+      body: JSON.stringify(req),
+    });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
   async align(req: AlignRequest): Promise<AlignInfo> {
     const r = await fetch(`${BASE}/align`, {
       method: "POST",

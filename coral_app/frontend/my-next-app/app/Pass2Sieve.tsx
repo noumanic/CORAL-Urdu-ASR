@@ -1,12 +1,35 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { AlignInfo, OOVResult } from "./lib/api";
+import SplitMergeAnimator from "./SplitMergeAnimator";
 
 interface Props {
-  alignInfo:    AlignInfo;
-  models:       string[];
-  onOOVResult:  (result: OOVResult) => void;
+  alignInfo:   AlignInfo;
+  models:      string[];
+  onOOVResult: (result: OOVResult) => void;
 }
+
+interface ModelAlignment {
+  attempt_alignment:    string[];
+  attempt_matchinfo:    number[];
+  split_merge_attempt:  string[];
+  split_merge_matchinfo: number[];
+  split_merge?: {
+    candidates: {
+      type:                     "split" | "merge";
+      source_words:             string[];
+      model_words:              string[];
+      model_word_idx_span:      [number, number];
+      source_word_idx_span:     [number, number];
+      source_boundaries_in_span: number[];
+      model_boundaries_in_span:  number[];
+      char_span_start:          number;
+      char_span_end:            number;
+    }[];
+  };
+}
+
+type Phase = "sieve" | "split-merge" | "done";
 
 const MATCH_THEME: Record<number, string> = {
   0: "border-emerald-700 bg-emerald-950 text-emerald-200",
@@ -15,14 +38,17 @@ const MATCH_THEME: Record<number, string> = {
   3: "border-amber-700   bg-amber-950   text-amber-200",
 };
 
-const s = {
-  label:    "text-zinc-600 uppercase",
-  btnGhost: "text-zinc-500 hover:text-violet-400 transition-colors",
-  btnApply: "w-full rounded-lg bg-teal-950 border border-teal-800 py-3 text-teal-300 font-mono font-semibold text-sm uppercase tracking-widest hover:bg-teal-900 transition-colors",
-  token:    (scanned: boolean, isOOV: boolean, isActive: boolean, isCursor: boolean, matchType: number) => {
-    const base = "px-2 py-1 rounded font-urdu text-sm border transition-all";
+const cls = {
+  label:     "text-zinc-600 uppercase font-mono text-xs",
+  btnGhost:  "text-zinc-500 hover:text-violet-400 transition-colors font-mono text-xs",
+  btnApply:  "w-full rounded-lg bg-teal-950 border border-teal-800 py-3 text-teal-300 font-mono font-semibold text-sm uppercase tracking-widest hover:bg-teal-900 transition-colors",
+  statusBar: "rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 flex items-center justify-between",
+  wordGrid:  "rounded-xl border border-zinc-800 bg-zinc-950 p-4 space-y-6",
+  chip: (scanned: boolean, isOOV: boolean, isActive: boolean, isCursor: boolean, matchType: number, animated: boolean) => {
+    const base = "px-2 py-1 rounded font-urdu text-sm border transition-all duration-300";
     if (isCursor)  return `${base} border-violet-400 bg-violet-900 scale-110 z-10 shadow-lg`;
     if (!scanned)  return `${base} border-zinc-800 text-zinc-700`;
+    if (animated)  return `${base} border-cyan-500 bg-cyan-950 text-cyan-200 scale-105`;
     return [
       base,
       MATCH_THEME[matchType] ?? MATCH_THEME[0],
@@ -30,24 +56,29 @@ const s = {
       isActive ? "ring-2 ring-rose-400" : "",
     ].join(" ");
   },
+  splitChip:  "px-2 py-1 rounded font-urdu text-sm border border-orange-700 bg-orange-950 text-orange-200 transition-all duration-500",
+  mergeChip:  "px-2 py-1 rounded font-urdu text-sm border border-purple-700 bg-purple-950 text-purple-200 transition-all duration-500",
+  resolvedChip: "px-2 py-1 rounded font-urdu text-sm border border-cyan-600 bg-cyan-950 text-cyan-100 scale-105 transition-all duration-500",
 };
 
-interface ModelAlignment {
-  attempt_alignment: string[];
-  attempt_matchinfo: number[];
-}
-
 export default function Pass2Sieve({ alignInfo, models, onOOVResult }: Props) {
-  const [sievePos,    setSievePos]    = useState<number | null>(null);
-  const [isDone,      setIsDone]      = useState(false);
-  const [oovResult,   setOovResult]   = useState<OOVResult | null>(null);
-  const [activeToken, setActiveToken] = useState<string | null>(null);
-  const [isLoading,   setIsLoading]   = useState(false);
+  const [sievePos,     setSievePos]     = useState<number | null>(null);
+  const [phase,        setPhase]        = useState<Phase>("sieve");
+  const [oovResult,    setOovResult]    = useState<OOVResult | null>(null);
+  const [activeToken,  setActiveToken]  = useState<string | null>(null);
+  const [isLoading,    setIsLoading]    = useState(false);
+  const [animatedIdx,  setAnimatedIdx]  = useState<Record<string, Set<number>>>({});
+  const [showResolved, setShowResolved] = useState<Record<string, Set<number>>>({});
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const chipRefs      = useRef<Map<string, HTMLElement>>(new Map());
+  const containerRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [resolvedByModel, setResolvedByModel] = useState<Record<string, Set<number>>>({});
+  const [animatingModels, setAnimatingModels] = useState<Set<string>>(new Set());
+  const maxLen = Math.max(...models.map(m =>
+    (alignInfo[m] as ModelAlignment)?.attempt_alignment.length ?? 0
+  ));
 
-  const maxLen = Math.max(...models.map(m => (alignInfo[m] as ModelAlignment)?.attempt_alignment.length ?? 0));
-
-  async function fetchOOVData() {
+  async function fetchOOV() {
     setIsLoading(true);
     try {
       const { api } = await import("./lib/api");
@@ -56,64 +87,156 @@ export default function Pass2Sieve({ alignInfo, models, onOOVResult }: Props) {
     } finally { setIsLoading(false); }
   }
 
-  function startAnimation() {
+  function startSieve() {
     if (timerRef.current) clearInterval(timerRef.current);
-    setSievePos(0); setIsDone(false);
+    setSievePos(0); setPhase("sieve");
     timerRef.current = setInterval(() => {
       setSievePos(p => {
-        if (p !== null && p >= maxLen) { 
-          clearInterval(timerRef.current!); 
-          setIsDone(true); 
-          return p; 
+        if (p !== null && p >= maxLen) {
+          clearInterval(timerRef.current!);
+          playSplitMergeAnimations();
+          return p;
         }
         return (p ?? 0) + 1;
       });
     }, 180);
   }
 
-  function runSieve() { fetchOOVData(); startAnimation(); }
+  function playSplitMergeAnimations() {
+    setPhase("split-merge");
+    const modelsWithCandidates = models.filter(m =>
+      (alignInfo[m] as ModelAlignment).split_merge?.candidates?.length
+    );
+    if (!modelsWithCandidates.length) { setPhase("done"); return; }
+    setAnimatingModels(new Set(modelsWithCandidates));
+  }
+
+  function handleAnimationComplete(modelName: string, resolved: Set<number>) {
+    setResolvedByModel(prev => ({ ...prev, [modelName]: resolved }));
+    setAnimatingModels(prev => {
+      const next = new Set(prev);
+      next.delete(modelName);
+      if (!next.size) setPhase("done");
+      return next;
+    });
+  }
+
+  function runSieve() { fetchOOV(); startSieve(); }
 
   useEffect(() => {
-    const t = setTimeout(runSieve, 1000);
+    const t = setTimeout(runSieve, 1200);
     return () => { clearTimeout(t); if (timerRef.current) clearInterval(timerRef.current); };
   }, [alignInfo]);
 
+  const hasCandidates = models.some(m =>
+    !!((alignInfo[m] as ModelAlignment).split_merge?.candidates?.length)
+  );
+
   return (
     <div className="space-y-5 font-mono text-xs">
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 flex items-center justify-between">
+
+      <div className={cls.statusBar}>
         <div className="flex gap-4">
-          {isLoading                      && <span className="text-violet-400">● Fetching OOV...</span>}
-          {sievePos !== null && !isDone   && <span className="text-violet-400 animate-pulse">● Scanning...</span>}
-          {isDone                         && <span className="text-emerald-400">● Scan complete</span>}
+          {isLoading                        && <span className="text-violet-400">● Fetching OOV...</span>}
+          {phase === "sieve"                && <span className="text-violet-400 animate-pulse">● Scanning...</span>}
+          {phase === "split-merge"          && <span className="text-orange-400 animate-pulse">● Resolving splits &amp; merges...</span>}
+          {phase === "done"                 && <span className="text-emerald-400">● Scan complete</span>}
         </div>
-        {isDone && <button onClick={runSieve} className={s.btnGhost}>↺ Re-run</button>}
+        {phase === "done" && <button onClick={runSieve} className={cls.btnGhost}>↺ Re-run</button>}
       </div>
 
       <div className="h-0.5 bg-zinc-800">
-        <div className="h-full bg-violet-500 transition-all" style={{ width: `${(sievePos ?? 0) / maxLen * 100}%` }} />
+        <div className="h-full bg-violet-500 transition-all"
+          style={{ width: `${(sievePos ?? 0) / maxLen * 100}%` }} />
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 space-y-6">
+      {/* split/merge legend */}
+      {hasCandidates && (
+        <div className="flex gap-3 items-center flex-wrap">
+          <span className="text-zinc-600 text-xs">match</span>
+          <span className="px-2 py-0.5 rounded border border-emerald-700 bg-emerald-950 text-emerald-300 text-xs">match</span>
+          <span className="px-2 py-0.5 rounded border border-blue-700 bg-blue-950 text-blue-300 text-xs">insertion</span>
+          <span className="px-2 py-0.5 rounded border border-red-700 bg-red-950 text-red-300 text-xs">deletion</span>
+          <span className="px-2 py-0.5 rounded border border-amber-700 bg-amber-950 text-amber-300 text-xs">substitution</span>
+          <span className="text-zinc-700">·</span>
+          <span className="px-2 py-0.5 rounded border border-orange-600 bg-orange-950 text-orange-300 text-xs">split</span>
+          <span className="px-2 py-0.5 rounded border border-purple-700 bg-purple-950 text-purple-300 text-xs">merge</span>
+          <span className="px-2 py-0.5 rounded border border-cyan-600 bg-cyan-950 text-cyan-200 text-xs">resolved</span>
+        </div>
+      )}
+
+      <div className={cls.wordGrid}>
         {models.map(model => {
-          const { attempt_alignment, attempt_matchinfo } = alignInfo[model] as ModelAlignment;
+          const m = alignInfo[model] as ModelAlignment;
           const isSrc = model === alignInfo.source_model;
+          const candidates = m.split_merge?.candidates ?? [];
+          const words     = phase === "done" ? (m.split_merge_attempt ?? m.attempt_alignment) : m.attempt_alignment;
+          const matchinfo = phase === "done" ? (m.split_merge_matchinfo ?? m.attempt_matchinfo) : m.attempt_matchinfo;
+
           return (
             <div key={model} className="space-y-2">
-              <p className={s.label}>{isSrc ? `★ ${model}` : model}</p>
-              <div className="flex flex-wrap gap-1.5" dir="rtl">
-                {attempt_alignment.map((word, i) => {
-                  const scanned  = isDone || (sievePos !== null && i < sievePos);
-                  const isOOV    = scanned && !!oovResult?.oov_dict.includes(word);
-                  const isActive = activeToken === word;
-                  return (
-                    <button key={i}
-                      onClick={() => isOOV && setActiveToken(isActive ? null : word)}
-                      className={s.token(scanned, isOOV, isActive, sievePos === i, attempt_matchinfo[i] ?? 0)}
+              <p className={cls.label}>{isSrc ? `★ ${model}` : model}</p>
+
+              <div
+                ref={el => { if (el) containerRefs.current.set(model, el); }}
+                className="relative"
+              >
+                <div className="flex flex-wrap gap-1.5 invisible absolute" dir="rtl">
+                  {(m.split_merge_attempt ?? []).map((word, i) => (
+                    <span key={i}
+                      ref={el => { if (el) chipRefs.current.set(`${model}:sm:${i}`, el); }}
+                      className="px-2 py-1 rounded font-urdu text-sm border border-transparent"
                     >
-                      {word || "∅"}
-                    </button>
-                  );
-                })}
+                      {word}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-1.5" dir="rtl">
+                  {words.map((word, i) => {
+                    const scanned  = phase !== "sieve" || (sievePos !== null && i < sievePos);
+                    const isOOV    = scanned && !!oovResult?.oov_dict.includes(word);
+                    const isActive = activeToken === word;
+                    const isResolved = !!resolvedByModel[model]?.has(i);
+                    return (
+                      <div key={i} className="relative group">
+                        <button
+                          ref={el => { if (el) chipRefs.current.set(`${model}:${i}`, el); }}
+                          onClick={() => isOOV && setActiveToken(isActive ? null : word)}
+                          className={cls.chip(scanned, isOOV, isActive, sievePos === i, matchinfo[i] ?? 0, isResolved)}
+                        >
+                          {word || "∅"}
+                        </button>
+                        {isResolved && (() => {
+                          const cand = candidates.find(c =>
+                            i >= c.source_word_idx_span[0] && i <= c.source_word_idx_span[1]
+                          );
+                          return cand ? (
+                            <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:flex gap-1 z-50 bg-zinc-900 border border-zinc-700 rounded px-2 py-1 whitespace-nowrap">
+                              {cand.model_words.map((w, wi) => (
+                                <span key={wi} className={`px-1.5 py-0.5 rounded font-urdu text-xs border ${
+                                  cand.type === "split"
+                                    ? "border-orange-700 bg-orange-950 text-orange-200"
+                                    : "border-purple-700 bg-purple-950 text-purple-200"
+                                }`}>{w}</span>
+                              ))}
+                            </div>
+                          ) : null;
+                        })()}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {phase === "split-merge" && animatingModels.has(model) && candidates.length > 0 && (
+                  <SplitMergeAnimator
+                    modelName={model}
+                    candidates={candidates}
+                    chipRefs={chipRefs}
+                    containerRef={{ current: containerRefs.current.get(model) ?? null }}
+                    onComplete={handleAnimationComplete}
+                  />
+                )}
               </div>
             </div>
           );
@@ -150,8 +273,8 @@ export default function Pass2Sieve({ alignInfo, models, onOOVResult }: Props) {
         </div>
       )}
 
-      {isDone && oovResult && (
-        <button onClick={() => onOOVResult(oovResult)} className={s.btnApply}>
+      {phase === "done" && oovResult && (
+        <button onClick={() => onOOVResult(oovResult)} className={cls.btnApply}>
           APPLY CORRECTION →
         </button>
       )}

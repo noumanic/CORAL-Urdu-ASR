@@ -23,6 +23,8 @@ tree = joblib.load(f"{BASE_DIR}/coral_data/bk_tree.joblib")
 
 from coral_pipeline_functions import (
     asr_aligner,
+    build_split_merge_attempt,
+    detect_split_merge,
     apply_corrections,
     extract_oov_metadata,
     build_oov_dict
@@ -51,6 +53,9 @@ class CorrectRequest(BaseModel):
     align_info:   dict
     oov_metadata: dict
 
+class SplitMergeRequest(BaseModel):
+    align_info: dict
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -64,6 +69,21 @@ def align(req: AlignRequest):
             weight_func=Levenshtein.normalized_distance
         )
         return align_info
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/split-merge")
+def split_merge(req: SplitMergeRequest):
+    try:
+        result = detect_split_merge(req.align_info)
+        for model_name, data in result.items():
+            req.align_info[model_name]['split_merge'] = data
+        req.align_info = build_split_merge_attempt(
+            req.align_info,
+            result,
+            weight_func=Levenshtein.normalized_distance
+        )
+        return req.align_info
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
