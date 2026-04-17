@@ -23,6 +23,14 @@ export interface CorrectRequest {
 export type InfoTag = "MATCH" | "INSERTION" | "DELETION" | "SUBSTITUTION";
 export type MetaTag = "SAME" | "SPLIT" | "MERGE" | "NOISE";
 
+const INFO_INT_MAP: Record<number, InfoTag> = {
+  0: "MATCH", 1: "INSERTION", 2: "DELETION", 3: "SUBSTITUTION",
+};
+
+export function normaliseInfoTags(tags: (InfoTag | number)[]): InfoTag[] {
+  return tags.map(t => typeof t === "number" ? (INFO_INT_MAP[t] ?? "MATCH") : t);
+}
+
 export interface ModelAlign {
   normalized_attempt:          string[];
   aligned_attempt:             string[];
