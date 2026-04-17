@@ -1,29 +1,36 @@
-const HF_TOKEN = process.env.NEXT_PUBLIC_HF_TOKEN;
-const BASE = process.env.NEXT_PUBLIC_API_URL;
+const HF_TOKEN    = process.env.NEXT_PUBLIC_HF_TOKEN;
+const BASE        = process.env.NEXT_PUBLIC_API_URL;
 const REGISTRY_BASE = `${process.env.NEXT_PUBLIC_API_URL}/registry`;
-const API_SECRET    = process.env.NEXT_PUBLIC_API_SECRET;
+const API_SECRET  = process.env.NEXT_PUBLIC_API_SECRET;
 
 export interface AlignRequest {
-  ensemble: Record<string, string>;
+  ensemble:     Record<string, string>;
   source_model: string;
 }
 
 export interface OOVRequest {
-  align_info: AlignInfo;
+  align_info:  AlignInfo;
   freq_cutoff?: number;
-  depth?: number;
-  top_n?: number;
+  depth?:       number;
+  top_n?:       number;
 }
 
 export interface CorrectRequest {
-  align_info: AlignInfo;
+  align_info:   AlignInfo;
   oov_metadata: OOVMetadata;
 }
 
+export type InfoTag = "MATCH" | "INSERTION" | "DELETION" | "SUBSTITUTION";
+export type MetaTag = "SAME" | "SPLIT" | "MERGE" | "NOISE";
+
 export interface ModelAlign {
-  normalized_attempt: string[];
-  attempt_alignment: string[];
-  attempt_matchinfo: number[];
+  normalized_attempt:          string[];
+  aligned_attempt:             string[];
+  aligned_info:                InfoTag[];
+  split_merge_aligned_attempt: string[];
+  split_merge_metadata:        MetaTag[];
+  split_merge_metadata_base:   MetaTag[];
+  split_merge_aligned_info:    InfoTag[];
 }
 
 export interface AlignInfo {
@@ -32,13 +39,13 @@ export interface AlignInfo {
 }
 
 export type CandidateMeta = [
-  number, // dist
-  number, // is_in_tri
-  number, // is_in_bi
-  number, // is_in_uni
-  number, // tri_freq
-  number, // bi_freq
-  number  // uni_freq
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
 ];
 
 export interface LiveModel {
@@ -58,46 +65,21 @@ export type OOVMetadata = Record<string, Record<string, CandidateMeta>>;
 export interface OOVResult {
   oov_dict: string[];
   metadata: OOVMetadata;
-  columns: string[]
+  columns:  string[];
 }
 
 export interface CorrectionResult {
-  source: string;
+  source:    string;
   corrected: string;
-  diff: { pos: number; original: string; corrected: string }[];
-}
-
-export interface ModelAlign {
-  normalized_attempt: string[];
-  attempt_alignment: string[];
-  attempt_matchinfo: number[];
-  split_merge_attempt: string[];      // add
-  split_merge_matchinfo: number[];    // add
-  split_merge?: object;               // add (for animations)
-}
-
-export interface SplitMergeRequest {
-  align_info: AlignInfo;
+  diff:      { pos: number; original: string; corrected: string }[];
 }
 
 export const api = {
-  async splitMerge(req: SplitMergeRequest): Promise<AlignInfo> {
-    const r = await fetch(`${BASE}/split-merge`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${HF_TOKEN}` },
-      body: JSON.stringify(req),
-    });
-    if (!r.ok) throw new Error(await r.text());
-    return r.json();
-  },
   async align(req: AlignRequest): Promise<AlignInfo> {
     const r = await fetch(`${BASE}/align`, {
-      method: "POST",
-      headers: {
-         "Content-Type": "application/json",
-         "Authorization" : `Bearer ${HF_TOKEN}`
-      },
-      body: JSON.stringify(req),
+      method:  "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${HF_TOKEN}` },
+      body:    JSON.stringify(req),
     });
     if (!r.ok) throw new Error(await r.text());
     return r.json();
@@ -105,12 +87,9 @@ export const api = {
 
   async oov(req: OOVRequest): Promise<OOVResult> {
     const r = await fetch(`${BASE}/oov`, {
-      method: "POST",
-      headers: {
-         "Content-Type": "application/json",
-         "Authorization" : `Bearer ${HF_TOKEN}`
-      },
-      body: JSON.stringify(req),
+      method:  "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${HF_TOKEN}` },
+      body:    JSON.stringify(req),
     });
     if (!r.ok) throw new Error(await r.text());
     return r.json();
@@ -118,37 +97,38 @@ export const api = {
 
   async correct(req: CorrectRequest): Promise<CorrectionResult> {
     const r = await fetch(`${BASE}/correct`, {
-      method: "POST",
-      headers: {
-         "Content-Type": "application/json",
-         "Authorization" : `Bearer ${HF_TOKEN}`
-      },
-      body: JSON.stringify(req),
+      method:  "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${HF_TOKEN}` },
+      body:    JSON.stringify(req),
     });
     if (!r.ok) throw new Error(await r.text());
     return r.json();
   },
+
   async models(): Promise<LiveModel[]> {
-      const r = await fetch(`${REGISTRY_BASE}/models`, {
-        headers: { "Authorization": `Bearer ${HF_TOKEN}` },
-      });
-      if (!r.ok) throw new Error(await r.text());
-      return r.json();
-    },
-  async transcribe(audio: Blob, filename: string, source_model: string, whitelist: string[]): Promise<TranscribeResult> {
+    const r = await fetch(`${REGISTRY_BASE}/models`, {
+      headers: { "Authorization": `Bearer ${HF_TOKEN}` },
+    });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+
+  async transcribe(
+    audio: Blob,
+    filename: string,
+    source_model: string,
+    whitelist: string[],
+  ): Promise<TranscribeResult> {
     const formData = new FormData();
     formData.append("audio", audio, filename);
     formData.append("source_model", source_model);
     formData.append("whitelist", whitelist.join(","));
     const r = await fetch(`${REGISTRY_BASE}/transcribe`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${HF_TOKEN}`,
-        "X-Api-Token":   API_SECRET ?? "",
-      },
-      body: formData,
+      method:  "POST",
+      headers: { "Authorization": `Bearer ${HF_TOKEN}`, "X-Api-Token": API_SECRET ?? "" },
+      body:    formData,
     });
     if (!r.ok) throw new Error(await r.text());
     return r.json();
-  }
+  },
 };

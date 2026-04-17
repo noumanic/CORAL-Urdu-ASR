@@ -36,7 +36,6 @@ export default function Home() {
   const [oovResult,  setOovResult]  = useState<OOVResult  | null>(null);
   const [hydrated,   setHydrated]   = useState(false);
 
-  // Hydrate once on mount
   useEffect(() => {
     setMode(lsGet<"file" | "speech">("coral_page_mode"));
     setActivePass(lsGet<number>("coral_page_activePass") || 1);
@@ -45,14 +44,13 @@ export default function Home() {
     setHydrated(true);
   }, []);
 
-  // Sync state to localStorage
   useEffect(() => {
     if (!hydrated) return;
     const sync: Record<string, unknown> = {
-      coral_page_mode:        mode,
-      coral_page_activePass:  activePass,
-      coral_page_alignInfo:   alignInfo,
-      coral_page_oovResult:   oovResult,
+      coral_page_mode:       mode,
+      coral_page_activePass: activePass,
+      coral_page_alignInfo:  alignInfo,
+      coral_page_oovResult:  oovResult,
     };
     Object.entries(sync).forEach(([k, v]) => {
       if (v === null || v === undefined) localStorage.removeItem(k);
@@ -64,10 +62,8 @@ export default function Home() {
     ? Object.keys(alignInfo).filter(k => k !== "source_model")
     : [];
 
-  const handleAligned = async (info: AlignInfo) => {
-    const { api } = await import("./lib/api");
-    const enriched = await api.splitMerge({ align_info: info });
-    setAlignInfo(enriched);
+  const handleAligned = (info: AlignInfo) => {
+    setAlignInfo(info);
     setOovResult(null);
     localStorage.removeItem("coral_p2_oovResult");
     localStorage.removeItem("coral_p2_done");
@@ -98,7 +94,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
 
-      {/* ── Header ── */}
       <header className="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur sticky top-0 z-50">
         <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -151,7 +146,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── Pass Info ── */}
       <div className="border-b border-zinc-900 bg-zinc-950">
         <div className="mx-auto max-w-5xl px-6 py-6">
           <div className="flex items-baseline gap-4">
@@ -170,7 +164,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Progress ── */}
       <div className="border-b border-zinc-900">
         <div className="mx-auto max-w-5xl px-6">
           <div className="flex">
@@ -186,10 +179,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Content ── */}
       <main className="mx-auto max-w-5xl px-6 py-10">
 
-        {/* Pass 1 — always mounted, hidden when inactive */}
         <div className={activePass === 1 ? "" : "hidden"}>
           {mode === "file"
             ? <Pass1Input onAligned={handleAligned} />
@@ -197,7 +188,6 @@ export default function Home() {
           }
         </div>
 
-        {/* Pass 2 — mounted once alignInfo exists, hidden when inactive */}
         <div className={activePass === 2 && alignInfo ? "" : "hidden"}>
           {alignInfo && (
             <Pass2Sieve
@@ -208,7 +198,6 @@ export default function Home() {
           )}
         </div>
 
-        {/* Pass 3 — mounted once both exist, hidden when inactive */}
         <div className={activePass === 3 && alignInfo && oovResult ? "" : "hidden"}>
           {alignInfo && oovResult && (
             <Pass3Correction alignInfo={alignInfo} oovResult={oovResult} />
