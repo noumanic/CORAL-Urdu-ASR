@@ -6,3 +6,12 @@ metadata/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+# Virtual environment
+venv/
+
+Environment variables
+coral_app/backend/.env
+
+Audios files
+audios/
