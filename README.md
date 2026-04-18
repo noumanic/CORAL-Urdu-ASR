@@ -1,6 +1,6 @@
 # CORAL — Collaborative Urdu ASR Post-Correction System
 
-> A multi-model ensemble system for correcting Urdu speech recognition outputs, supporting batch file processing and live speech transcription with human-in-the-loop and LLM-assisted validation.
+> Multi-stage Urdu ASR correction engine reducing Word Error Rate via confidence-weighted ensembles, n-gram OOV detection, and LLM refinement - without requiring model fine-tuning.
 
 <div align="center">
 
@@ -252,6 +252,20 @@ CORAL-Urdu-ASR/
 | Whisper Large v3 | 1.5B | `whisper_large_kaggle.ipynb` |
 | Whisper Medium | 769M | — |
 | Wav2Vec2 Urdu | 317M | — |
+
+---
+
+## Performance
+
+| Metric | Value |
+|--------|-------|
+| Ensemble WER (weighted) | 11.8% |
+| CER before correction | 9.2% |
+| CER after correction | 7.1% |
+| WER before correction | 12.1% |
+| WER after correction | 8.4% |
+| OOV word accuracy improvement | +36.7 pp |
+| BK-Tree search vs. linear scan | 11.3× faster |
 
 ---
 
