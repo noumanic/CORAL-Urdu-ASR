@@ -44,6 +44,7 @@ const TEAM: Member[] = [
     focus:       "Idea pitching · Evaluations · Ablation",
     bio:         "Pitched the original CORAL research idea and framed the consensus-refinement hypothesis that the project is built around. Owns the full evaluation methodology — Common Voice and conversational benchmarks, the eight-step ablation suite, residual-error analysis, and the WER/CER reporting that drives the future-work roadmap.",
     color:       "violet",
+    image:       "/rafay-khatak.jpg",
     githubUrl:   "https://github.com/rafaykhattak",
     linkedinUrl: "https://www.linkedin.com/in/rafaykhattak",
   },

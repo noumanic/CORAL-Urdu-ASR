@@ -16,7 +16,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title:       "CORAL — Low-Resource Urdu ASR Post-Correction",
+  title:       "CORAL | Low-Resource Urdu ASR Post-Correction",
   description: "Consensus-Based Refinement and Output Realignment — a five-stage post-processing pipeline that cuts Urdu speech-recognition error rates by up to 46.5%.",
   icons: {
     icon: "/coral-logo.png",
