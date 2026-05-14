@@ -22,9 +22,7 @@ interface LLMResult {
 interface Props { alignInfo: AlignInfo; oovResult: OOVResult; }
 
 type CorrectionMode = "voting" | "llm";
-type LLMProvider    = "gemini" | "openrouter";
 
-// ── Styles ────────────────────────────────────────────────────────────────────
 const s = {
   label:     "text-xs font-mono text-zinc-500 uppercase tracking-widest",
   labelTeal: "text-xs font-mono text-teal-500 uppercase tracking-widest",
@@ -47,34 +45,28 @@ function ErrorBanner({ msg }: { msg: string | null }) {
   return <p className="rounded-lg border border-red-800 bg-red-950 px-4 py-2 text-sm text-red-300 font-mono">{msg}</p>;
 }
 
-function ThinkingDots({ color = "violet" }: { color?: "violet" | "orange" }) {
-  const cls = color === "orange" ? "bg-orange-400" : "bg-violet-400";
+function ThinkingDots() {
   return (
     <span className="inline-flex gap-0.5 items-center h-3">
       {[0, 1, 2].map(i => (
-        <span key={i} className={`w-1 h-1 rounded-full ${cls} animate-bounce`}
+        <span key={i} className="w-1 h-1 rounded-full bg-violet-400 animate-bounce"
           style={{ animationDelay: `${i * 0.15}s`, animationDuration: "0.8s" }} />
       ))}
     </span>
   );
 }
 
-// ── Strip model/ prefix for display ──────────────────────────────────────────
-function modelLabel(m: string) { return m.replace(/^models\//, ""); }
-
-// ── Parse JSON robustly (strip fences, find outermost {}) ─────────────────────
+// Strip <think>...</think> reasoning blocks and ```json fences, then locate the outermost JSON object.
 function parseJsonResponse(raw: string): LLMResult {
-  const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
-  const start = stripped.indexOf("{");
-  const end   = stripped.lastIndexOf("}");
+  let body = raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+  body = body.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+  const start = body.indexOf("{");
+  const end   = body.lastIndexOf("}");
   if (start === -1 || end === -1)
-    throw new Error(`No JSON object in response. Preview: ${stripped.slice(0, 160)}`);
-  return JSON.parse(stripped.slice(start, end + 1));
+    throw new Error(`No JSON object in response. Preview: ${body.slice(0, 160)}`);
+  return JSON.parse(body.slice(start, end + 1));
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  MODEL CONFIDENCE WEIGHTS
-// ══════════════════════════════════════════════════════════════════════════════
 const MODEL_CONFIDENCE: Record<string, number> = {
   "seamless-large": 0.90,
   "whisper-large":  0.75,
@@ -83,19 +75,15 @@ const MODEL_CONFIDENCE: Record<string, number> = {
 };
 
 function getModelConfidence(modelKey: string): number {
-  // Fuzzy match: check if any known key appears in the model key or vice versa
   const lower = modelKey.toLowerCase();
   for (const [known, score] of Object.entries(MODEL_CONFIDENCE)) {
     if (lower.includes(known.toLowerCase()) || known.toLowerCase().includes(lower)) {
       return score;
     }
   }
-  return 0.65; // default for unknown/unlisted models
+  return 0.65;
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  SYSTEM PROMPT  (used as systemInstruction in Gemini, system role in OpenRouter)
-// ══════════════════════════════════════════════════════════════════════════════
 const URDU_ASR_SYSTEM_PROMPT = `You are a senior Urdu computational linguist and ASR post-correction specialist with deep expertise in:
 - Standard Urdu (Khari Boli) grammar, morphology, and orthography
 - Nastaliq script conventions and Unicode normalization
@@ -133,9 +121,6 @@ Your task is to produce the single most linguistically accurate Urdu transcript 
 - The "changes" array: only words that were actually modified. If a change affects a multi-word span, list each token as a separate entry.
 - If no corrections are warranted, return the source text verbatim and an empty changes array.`;
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  PROMPT BUILDER
-// ══════════════════════════════════════════════════════════════════════════════
 function buildPrompt(alignInfo: AlignInfo, oovResult: OOVResult): string {
   const sourceModel = alignInfo.source_model as string;
   const sourceAlign = alignInfo[sourceModel] as {
@@ -147,7 +132,6 @@ function buildPrompt(alignInfo: AlignInfo, oovResult: OOVResult): string {
   const sourceRaw        = sourceAlign?.raw_attempt?.join(" ") ?? "";
   const sourceConf       = getModelConfidence(sourceModel);
 
-  // Build per-model hypothesis block with confidence weights
   const modelBlocks: string[] = [];
   Object.entries(alignInfo).forEach(([key, val]) => {
     if (key === "source_model") return;
@@ -158,12 +142,9 @@ function buildPrompt(alignInfo: AlignInfo, oovResult: OOVResult): string {
     modelBlocks.push(`[${key}] (confidence: ${conf.toFixed(2)}): ${text}`);
   });
 
-  // OOV summary — include top-3 candidates with scores, not just top-1
-  // CandidateMeta may be an object with a numeric score field, or a number directly
   function extractScore(meta: unknown): number {
     if (typeof meta === "number") return meta;
     if (meta && typeof meta === "object") {
-      // common field names for a score inside CandidateMeta
       for (const key of ["score", "confidence", "prob", "probability", "value"]) {
         const v = (meta as Record<string, unknown>)[key];
         if (typeof v === "number") return v;
@@ -216,156 +197,46 @@ Respond ONLY with this exact JSON (no markdown fences, no text before or after):
 }`;
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  GEMINI
-// ══════════════════════════════════════════════════════════════════════════════
-async function listGeminiModels(apiKey: string): Promise<string[]> {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
-  );
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message ?? `Gemini ListModels ${res.status}`);
-  }
-  const data = await res.json();
-  return (data.models ?? [])
-    .filter((m: { supportedGenerationMethods?: string[] }) =>
-      m.supportedGenerationMethods?.includes("generateContent"))
-    .map((m: { name: string }) => m.name);
+interface AkiResponse {
+  text?:    string;
+  success?: boolean;
+  job_id?:  string;
+  total_duration?: number;
 }
 
-async function callGemini(
-  userPrompt: string,
-  model: string,
-  apiKey: string
-): Promise<string> {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        // systemInstruction is the proper Gemini system-prompt field
-        systemInstruction: {
-          parts: [{ text: URDU_ASR_SYSTEM_PROMPT }],
-        },
-        contents: [{ parts: [{ text: userPrompt }] }],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 8192,
-          responseMimeType: "application/json",
-        },
-      }),
-    }
-  );
+async function callGptOssChat(userPrompt: string): Promise<string> {
+  const url = process.env.NEXT_PUBLIC_AKI_URL;
+  const key = process.env.NEXT_PUBLIC_AKI_KEY;
+  if (!url) throw new Error("NEXT_PUBLIC_AKI_URL not set in .env");
+  if (!key) throw new Error("NEXT_PUBLIC_AKI_KEY not set in .env");
+
+  const fullPrompt = `${URDU_ASR_SYSTEM_PROMPT}\n\n${userPrompt}`;
+  const res = await fetch(url, {
+    method:  "POST",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify({ key, prompt_input: fullPrompt, wait_for_result: true }),
+  });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message ?? `Gemini API ${res.status}`);
+    const errText = await res.text().catch(() => "");
+    throw new Error(`gpt_oss_chat ${res.status}${errText ? `: ${errText}` : ""}`);
   }
-  const data = await res.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error("Empty response from Gemini");
+  const data: AkiResponse = await res.json();
+  if (data.success === false) throw new Error("gpt_oss_chat returned success=false");
+  const text = data.text;
+  if (!text) throw new Error("Empty response from gpt_oss_chat");
   return text;
 }
-
-// ══════════════════════════════════════════════════════════════════════════════
-//  OPENROUTER
-// ══════════════════════════════════════════════════════════════════════════════
-interface ORModel {
-  id:             string;
-  name:           string;
-  context_length: number;
-  pricing:        { prompt: string; completion: string };
-}
-
-async function listOpenRouterModels(apiKey: string): Promise<ORModel[]> {
-  const res = await fetch("https://openrouter.ai/api/v1/models", {
-    headers: { Authorization: `Bearer ${apiKey}` },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message ?? `OpenRouter ListModels ${res.status}`);
-  }
-  const data = await res.json();
-  const models: ORModel[] = data.data ?? [];
-  return models.sort((a, b) => {
-    const aFree = a.id.endsWith(":free");
-    const bFree = b.id.endsWith(":free");
-    if (aFree && !bFree) return -1;
-    if (!aFree && bFree) return 1;
-    return a.name.localeCompare(b.name);
-  });
-}
-
-async function callOpenRouter(
-  userPrompt: string,
-  model: string,
-  apiKey: string
-): Promise<string> {
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type":  "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-      "HTTP-Referer":  "https://coral.local",
-      "X-Title":       "CORAL Urdu ASR",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        // system role carries the linguistic persona and rules
-        { role: "system", content: URDU_ASR_SYSTEM_PROMPT },
-        { role: "user",   content: userPrompt },
-      ],
-      temperature:     0.1,
-      max_tokens:      8192,
-      response_format: { type: "json_object" },
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message ?? `OpenRouter API ${res.status}`);
-  }
-  const data = await res.json();
-  const text = data?.choices?.[0]?.message?.content;
-  if (!text) throw new Error("Empty response from OpenRouter");
-  return text;
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-//  COMPONENT
-// ══════════════════════════════════════════════════════════════════════════════
-const PROVIDER_DEFAULTS: Record<LLMProvider, string> = {
-  gemini:     "models/gemini-2.0-flash",
-  openrouter: "meta-llama/llama-3.3-70b-instruct:free",
-};
 
 export default function Pass3Correction({ alignInfo, oovResult }: Props) {
-  const [mode,          setMode]          = useState<CorrectionMode>("voting");
-  const [result,        setResult]        = useState<CorrectionResult | null>(null);
-  const [llmResult,     setLlmResult]     = useState<LLMResult | null>(null);
-  const [loading,       setLoading]       = useState(false);
-  const [error,         setError]         = useState<string | null>(null);
-  const [llmPhase,      setLlmPhase]      = useState<"idle"|"prompting"|"waiting"|"parsing"|"done">("idle");
-
-  // ── provider state ────────────────────────────────────────────────────────
-  const [provider,      setProvider]      = useState<LLMProvider>("gemini");
-  const [selectedModel, setSelectedModel] = useState<string>(PROVIDER_DEFAULTS.gemini);
-
-  // ── gemini model list ─────────────────────────────────────────────────────
-  const [geminiModels,  setGeminiModels]  = useState<string[]>([]);
-  const [geminiMLdg,    setGeminiMLdg]    = useState(false);
-  const [geminiMLErr,   setGeminiMLErr]   = useState<string | null>(null);
-
-  // ── openrouter model list ─────────────────────────────────────────────────
-  const [orModels,      setOrModels]      = useState<ORModel[]>([]);
-  const [orMLdg,        setOrMLdg]        = useState(false);
-  const [orMLErr,       setOrMLErr]       = useState<string | null>(null);
-  const [orFilter,      setOrFilter]      = useState<"all"|"free">("free");
+  const [mode,      setMode]      = useState<CorrectionMode>("voting");
+  const [result,    setResult]    = useState<CorrectionResult | null>(null);
+  const [llmResult, setLlmResult] = useState<LLMResult | null>(null);
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState<string | null>(null);
+  const [llmPhase,  setLlmPhase]  = useState<"idle"|"prompting"|"waiting"|"parsing"|"done">("idle");
 
   const didAutoRun = useRef(false);
 
-  // ── hydrate ───────────────────────────────────────────────────────────────
   useEffect(() => {
     const r  = lsGet<CorrectionResult>(SK_RESULT);
     const lr = lsGet<LLMResult>(SK_LLM_RESULT);
@@ -383,14 +254,6 @@ export default function Pass3Correction({ alignInfo, oovResult }: Props) {
   useEffect(() => { lsSet(SK_RESULT,     result);    }, [result]);
   useEffect(() => { lsSet(SK_LLM_RESULT, llmResult); }, [llmResult]);
 
-  // ── switch provider → reset model to default ─────────────────────────────
-  function switchProvider(p: LLMProvider) {
-    setProvider(p);
-    setSelectedModel(PROVIDER_DEFAULTS[p]);
-    setError(null);
-  }
-
-  // ── voting ────────────────────────────────────────────────────────────────
   async function runVoting() {
     setLoading(true); setError(null);
     try {
@@ -401,25 +264,13 @@ export default function Pass3Correction({ alignInfo, oovResult }: Props) {
     } finally { setLoading(false); }
   }
 
-  // ── LLM dispatch ──────────────────────────────────────────────────────────
   async function runLLM() {
     setLoading(true); setError(null); setLlmResult(null);
     try {
       setLlmPhase("prompting");
       const userPrompt = buildPrompt(alignInfo, oovResult);
       setLlmPhase("waiting");
-
-      let raw: string;
-      if (provider === "gemini") {
-        const key = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-        if (!key) throw new Error("NEXT_PUBLIC_GEMINI_API_KEY not set in .env");
-        raw = await callGemini(userPrompt, selectedModel, key);
-      } else {
-        const key = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
-        if (!key) throw new Error("NEXT_PUBLIC_OPENROUTER_API_KEY not set in .env");
-        raw = await callOpenRouter(userPrompt, selectedModel, key);
-      }
-
+      const raw = await callGptOssChat(userPrompt);
       setLlmPhase("parsing");
       setLlmResult(parseJsonResponse(raw));
       setLlmPhase("done");
@@ -429,39 +280,12 @@ export default function Pass3Correction({ alignInfo, oovResult }: Props) {
     } finally { setLoading(false); }
   }
 
-  // ── fetch Gemini model list ───────────────────────────────────────────────
-  async function fetchGeminiModels() {
-    const key = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    if (!key) { setGeminiMLErr("NEXT_PUBLIC_GEMINI_API_KEY not set"); return; }
-    setGeminiMLdg(true); setGeminiMLErr(null);
-    try {
-      const models = await listGeminiModels(key);
-      setGeminiModels(models);
-      if (models.length > 0 && !models.includes(selectedModel)) setSelectedModel(models[0]);
-    } catch (e: unknown) {
-      setGeminiMLErr(e instanceof Error ? e.message : "Failed to list models");
-    } finally { setGeminiMLdg(false); }
-  }
-
-  // ── fetch OpenRouter model list ───────────────────────────────────────────
-  async function fetchORModels() {
-    const key = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
-    if (!key) { setOrMLErr("NEXT_PUBLIC_OPENROUTER_API_KEY not set"); return; }
-    setOrMLdg(true); setOrMLErr(null);
-    try {
-      setOrModels(await listOpenRouterModels(key));
-    } catch (e: unknown) {
-      setOrMLErr(e instanceof Error ? e.message : "Failed to list models");
-    } finally { setOrMLdg(false); }
-  }
-
   function switchMode(m: CorrectionMode) {
     setMode(m); setError(null);
     if (m === "llm"    && !llmResult) runLLM();
     if (m === "voting" && !result)    runVoting();
   }
 
-  // ── voting view helpers ───────────────────────────────────────────────────
   const sourceWords    = result?.source.split(" ")    ?? [];
   const correctedWords = result?.corrected.split(" ") ?? [];
   const diffPositions  = new Set(result?.diff.map(d => d.pos) ?? []);
@@ -471,14 +295,6 @@ export default function Pass3Correction({ alignInfo, oovResult }: Props) {
     idle: "", prompting: "Building prompt...", waiting: "Waiting for response...",
     parsing: "Parsing...", done: "Done",
   };
-
-  // ── filtered OR models ────────────────────────────────────────────────────
-  const visibleORModels = orFilter === "free"
-    ? orModels.filter(m => m.id.endsWith(":free"))
-    : orModels;
-
-  const isOR     = provider === "openrouter";
-  const dotColor = isOR ? "orange" : "violet";
 
   return (
     <div className="space-y-5">
@@ -493,150 +309,13 @@ export default function Pass3Correction({ alignInfo, oovResult }: Props) {
           >
             <span className="flex items-center justify-center gap-2">
               <span className={`w-1.5 h-1.5 rounded-full ${
-                mode === m ? (m === "voting" ? "bg-teal-400" : isOR ? "bg-orange-400" : "bg-violet-400") : "bg-zinc-700"
+                mode === m ? (m === "voting" ? "bg-teal-400" : "bg-violet-400") : "bg-zinc-700"
               }`} />
               {m === "voting" ? "Voting Correction" : "LLM Correction"}
             </span>
           </button>
         ))}
       </div>
-
-      {/* ══════════════════════════════════════════════════════════════
-          LLM CONFIG PANEL
-      ══════════════════════════════════════════════════════════════ */}
-      {mode === "llm" && (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 px-4 py-4 space-y-4">
-
-          {/* ── Provider toggle ── */}
-          <div className="space-y-1.5">
-            <span className={s.label}>Provider</span>
-            <div className="flex gap-1 mt-1">
-              {(["gemini", "openrouter"] as LLMProvider[]).map(p => (
-                <button key={p} onClick={() => switchProvider(p)}
-                  className={["flex-1 py-2 px-3 rounded-lg font-mono text-xs tracking-widest uppercase border transition-all duration-200",
-                    provider === p
-                      ? p === "gemini"
-                        ? "bg-violet-950 border-violet-700 text-violet-200"
-                        : "bg-orange-950 border-orange-700 text-orange-200"
-                      : "bg-transparent border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300",
-                  ].join(" ")}
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      provider === p ? (p === "gemini" ? "bg-violet-400" : "bg-orange-400") : "bg-zinc-700"
-                    }`} />
-                    {p === "gemini" ? "Gemini" : "OpenRouter"}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Gemini model picker ── */}
-          {provider === "gemini" && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className={s.label}>Model</span>
-                <button onClick={fetchGeminiModels} disabled={geminiMLdg}
-                  className="px-2.5 py-1 rounded border border-violet-900 text-xs font-mono text-violet-500 hover:border-violet-700 hover:text-violet-300 transition-colors disabled:opacity-40 flex items-center gap-1.5"
-                >
-                  {geminiMLdg ? <><ThinkingDots /><span>fetching...</span></> : "↓ List models"}
-                </button>
-              </div>
-              {/* manual input */}
-              <div className="flex gap-2 items-center">
-                <span className="text-zinc-700 text-xs font-mono shrink-0">models/</span>
-                <input value={modelLabel(selectedModel)} onChange={e => setSelectedModel(`models/${e.target.value}`)}
-                  placeholder="gemini-2.0-flash"
-                  className="flex-1 bg-zinc-950 border border-zinc-700 rounded px-2.5 py-1 text-xs font-mono text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-violet-700 transition-colors"
-                />
-              </div>
-              {/* chip grid */}
-              {geminiModels.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto">
-                  {geminiModels.map(m => (
-                    <button key={m} onClick={() => setSelectedModel(m)}
-                      className={["px-2.5 py-1 rounded text-[10px] font-mono tracking-wide border transition-all duration-150",
-                        selectedModel === m
-                          ? "border-violet-600 bg-violet-950 text-violet-200"
-                          : "border-zinc-800 bg-zinc-900 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300",
-                      ].join(" ")}
-                    >
-                      {modelLabel(m)}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {geminiMLErr && <p className="text-xs font-mono text-red-400">{geminiMLErr}</p>}
-            </div>
-          )}
-
-          {/* ── OpenRouter model picker ── */}
-          {provider === "openrouter" && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className={s.label}>Model</span>
-                <div className="flex items-center gap-2">
-                  {/* free / all filter */}
-                  {orModels.length > 0 && (
-                    <div className="flex rounded border border-zinc-700 overflow-hidden text-[10px] font-mono">
-                      {(["free", "all"] as const).map(f => (
-                        <button key={f} onClick={() => setOrFilter(f)}
-                          className={["px-2.5 py-1 transition-colors",
-                            orFilter === f ? "bg-zinc-700 text-zinc-100" : "bg-transparent text-zinc-500 hover:text-zinc-300",
-                          ].join(" ")}
-                        >
-                          {f}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <button onClick={fetchORModels} disabled={orMLdg}
-                    className="px-2.5 py-1 rounded border border-orange-900 text-xs font-mono text-orange-500 hover:border-orange-700 hover:text-orange-300 transition-colors disabled:opacity-40 flex items-center gap-1.5"
-                  >
-                    {orMLdg ? <><ThinkingDots color="orange" /><span>fetching...</span></> : "↓ List models"}
-                  </button>
-                </div>
-              </div>
-
-              {/* manual input */}
-              <input value={selectedModel} onChange={e => setSelectedModel(e.target.value)}
-                placeholder="meta-llama/llama-3.3-70b-instruct:free"
-                className="w-full bg-zinc-950 border border-zinc-700 rounded px-2.5 py-1 text-xs font-mono text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-orange-700 transition-colors"
-              />
-
-              {/* chip grid */}
-              {visibleORModels.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
-                  {visibleORModels.map(m => {
-                    const isFree     = m.id.endsWith(":free");
-                    const isSelected = selectedModel === m.id;
-                    return (
-                      <button key={m.id} onClick={() => setSelectedModel(m.id)}
-                        title={`ctx: ${m.context_length.toLocaleString()} · prompt: $${m.pricing.prompt}/1k`}
-                        className={["px-2.5 py-1 rounded text-[10px] font-mono tracking-wide border transition-all duration-150 flex items-center gap-1.5",
-                          isSelected
-                            ? "border-orange-600 bg-orange-950 text-orange-200"
-                            : "border-zinc-800 bg-zinc-900 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300",
-                        ].join(" ")}
-                      >
-                        {isFree && (
-                          <span className={`text-[8px] px-1 rounded ${isSelected ? "bg-orange-800 text-orange-200" : "bg-zinc-800 text-zinc-500"}`}>
-                            FREE
-                          </span>
-                        )}
-                        {m.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {orMLErr && <p className="text-xs font-mono text-red-400">{orMLErr}</p>}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ── Status bar ── */}
       <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 flex items-center gap-4 min-h-[46px]">
@@ -647,10 +326,10 @@ export default function Pass3Correction({ alignInfo, oovResult }: Props) {
           </span>
         )}
         {loading && mode === "llm" && (
-          <span className="flex items-center gap-2 font-mono text-xs" style={{ color: isOR ? "rgb(251 146 60)" : "rgb(167 139 250)" }}>
-            <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isOR ? "bg-orange-400" : "bg-violet-400"}`} />
+          <span className="flex items-center gap-2 font-mono text-xs text-violet-400">
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-violet-400" />
             {llmPhaseLabel[llmPhase]}
-            <ThinkingDots color={dotColor} />
+            <ThinkingDots />
           </span>
         )}
         {!loading && mode === "voting" && result && (
@@ -669,15 +348,13 @@ export default function Pass3Correction({ alignInfo, oovResult }: Props) {
         )}
         {!loading && mode === "llm" && llmResult && (
           <>
-            <span className={`flex items-center gap-2 font-mono text-xs ${isOR ? "text-orange-400" : "text-violet-400"}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isOR ? "bg-orange-400" : "bg-violet-400"}`} />
-              {modelLabel(selectedModel)}
+            <span className="flex items-center gap-2 font-mono text-xs text-violet-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+              LLM correction complete
             </span>
             {llmResult.changes.length === 0
               ? <span className="font-mono text-xs text-emerald-500 bg-emerald-950 border border-emerald-800 px-2 py-0.5 rounded">No changes</span>
-              : <span className={`font-mono text-xs px-2 py-0.5 rounded tabular-nums border ${
-                  isOR ? "text-orange-400 bg-orange-950 border-orange-800" : "text-violet-400 bg-violet-950 border-violet-800"
-                }`}>
+              : <span className="font-mono text-xs px-2 py-0.5 rounded tabular-nums border text-violet-400 bg-violet-950 border-violet-800">
                   {llmResult.changes.length} correction{llmResult.changes.length !== 1 ? "s" : ""}
                 </span>
             }
@@ -686,11 +363,7 @@ export default function Pass3Correction({ alignInfo, oovResult }: Props) {
         <div className="flex-1" />
         {!loading && mode === "voting" && result    && <button onClick={runVoting} className={s.btnGhost}>↺ Re-apply</button>}
         {!loading && mode === "llm"    && llmResult && (
-          <button onClick={runLLM} className={`px-3 py-1 rounded border text-xs font-mono transition-colors ${
-            isOR
-              ? "border-orange-800 text-orange-500 hover:border-orange-600 hover:text-orange-300"
-              : "border-violet-800 text-violet-500 hover:border-violet-600 hover:text-violet-300"
-          }`}>↺ Re-ask</button>
+          <button onClick={runLLM} className="px-3 py-1 rounded border text-xs font-mono transition-colors border-violet-800 text-violet-500 hover:border-violet-600 hover:text-violet-300">↺ Re-ask</button>
         )}
       </div>
 
@@ -773,13 +446,11 @@ export default function Pass3Correction({ alignInfo, oovResult }: Props) {
       {mode === "llm" && llmResult && (
         <div className="space-y-4">
           {llmResult.reasoning && (
-            <div className={`rounded-xl px-4 py-3 flex gap-3 border ${
-              isOR ? "border-orange-900/40 bg-orange-950/10" : "border-violet-900/40 bg-violet-950/10"
-            }`}>
-              <span className={`text-xs font-mono uppercase tracking-widest shrink-0 pt-0.5 ${isOR ? "text-orange-500" : "text-violet-500"}`}>
+            <div className="rounded-xl px-4 py-3 flex gap-3 border border-violet-900/40 bg-violet-950/10">
+              <span className="text-xs font-mono uppercase tracking-widest shrink-0 pt-0.5 text-violet-500">
                 reasoning
               </span>
-              <p className={`font-mono text-xs leading-relaxed ${isOR ? "text-orange-300" : "text-violet-300"}`}>
+              <p className="font-mono text-xs leading-relaxed text-violet-300">
                 {llmResult.reasoning}
               </p>
             </div>
@@ -792,8 +463,6 @@ export default function Pass3Correction({ alignInfo, oovResult }: Props) {
             const changedOrig = new Set(llmResult.changes.map(c => c.original));
             const changedCorr = new Set(llmResult.changes.map(c => c.corrected));
             const corrTok     = llmResult.corrected.split(" ");
-            const borderCls   = isOR ? "border-orange-900" : "border-violet-900";
-            const labelCls    = isOR ? "text-orange-500"   : "text-violet-500";
             return (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className={s.card}>
@@ -804,9 +473,9 @@ export default function Pass3Correction({ alignInfo, oovResult }: Props) {
                     ))}
                   </div>
                 </div>
-                <div className={`rounded-xl border ${borderCls} bg-zinc-950 p-4`}>
-                  <p className={`text-xs font-mono uppercase tracking-widest mb-3 ${labelCls}`}>
-                    {isOR ? "OpenRouter" : "Gemini"} · {modelLabel(selectedModel)}
+                <div className="rounded-xl border border-violet-900 bg-zinc-950 p-4">
+                  <p className="text-xs font-mono uppercase tracking-widest mb-3 text-violet-500">
+                    LLM Corrected
                   </p>
                   <div className="flex flex-wrap gap-1.5 justify-end" dir="rtl">
                     {corrTok.map((word, i) => (
@@ -838,7 +507,7 @@ export default function Pass3Correction({ alignInfo, oovResult }: Props) {
                     <tr key={i} className="border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors">
                       <td className="px-4 py-2 text-right font-urdu text-base text-rose-400">{c.original}</td>
                       <td className="px-4 py-2 text-center text-zinc-700">→</td>
-                      <td className={`px-4 py-2 text-right font-urdu text-base font-semibold ${isOR ? "text-orange-300" : "text-violet-300"}`}>{c.corrected}</td>
+                      <td className="px-4 py-2 text-right font-urdu text-base font-semibold text-violet-300">{c.corrected}</td>
                       <td className="px-4 py-2 text-left  text-zinc-500 text-xs">{c.reason}</td>
                     </tr>
                   ))}
@@ -847,10 +516,10 @@ export default function Pass3Correction({ alignInfo, oovResult }: Props) {
             </div>
           )}
 
-          <div className={`rounded-xl border p-5 ${isOR ? "border-orange-800 bg-orange-950/10" : "border-violet-800 bg-violet-950/10"}`}>
+          <div className="rounded-xl border p-5 border-violet-800 bg-violet-950/10">
             <div className="flex items-center justify-between mb-3">
-              <p className={`text-xs font-mono uppercase tracking-widest ${isOR ? "text-orange-500" : "text-violet-500"}`}>
-                Final Transcript · {isOR ? "OpenRouter" : "Gemini"}
+              <p className="text-xs font-mono uppercase tracking-widest text-violet-500">
+                Final Transcript · LLM
               </p>
               <button onClick={() => navigator.clipboard.writeText(llmResult.corrected)} className={s.btnCopy}>Copy</button>
             </div>
@@ -865,7 +534,7 @@ export default function Pass3Correction({ alignInfo, oovResult }: Props) {
           <div className="h-10 rounded-xl bg-zinc-900 border border-zinc-800" />
           <div className="grid grid-cols-2 gap-4">
             <div className="h-32 rounded-xl bg-zinc-900 border border-zinc-800" />
-            <div className={`h-32 rounded-xl bg-zinc-900 border ${isOR ? "border-orange-900/30" : "border-violet-900/30"}`} />
+            <div className="h-32 rounded-xl bg-zinc-900 border border-violet-900/30" />
           </div>
           <div className="h-24 rounded-xl bg-zinc-900 border border-zinc-800" />
         </div>

@@ -7,7 +7,6 @@ const uid = () => Math.random().toString(36).slice(2, 8);
 interface ManualSlot { id: string; key: string; text: string; }
 interface Props { onAligned: (info: AlignInfo) => void; }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
 const s = {
   card:       "rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden",
   cardSm:     "rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3",
@@ -34,6 +33,8 @@ function ErrorBanner({ msg }: { msg: string | null }) {
   return <p className="rounded-lg border border-red-800 bg-red-950 px-4 py-2 text-sm text-red-300 font-mono">{msg}</p>;
 }
 
+type Mode = "auto" | "manual";
+
 export default function Pass0Speech({ onAligned }: Props) {
 
   const [audio,        setAudio]        = useState<{ file: File | null; blob: Blob | null; url: string | null }>({ file: null, blob: null, url: null });
@@ -48,6 +49,8 @@ export default function Pass0Speech({ onAligned }: Props) {
   const [aligning,     setAligning]     = useState(false);
   const [alignError,   setAlignError]   = useState<string | null>(null);
   const [manualSlots,  setManualSlots]  = useState<ManualSlot[]>([]);
+  const [mode,         setMode]         = useState<Mode>("auto");
+  const [manualSrc,    setManualSrc]    = useState<string>("");
 
   const mediaRef  = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobEvent["data"][]>([]);
@@ -70,6 +73,15 @@ export default function Pass0Speech({ onAligned }: Props) {
     const id = setInterval(fetchModels, 40000);
     return () => clearInterval(id);
   }, []);
+
+  // Auto-switch to manual mode if no live models came back after first fetch.
+  useEffect(() => {
+    if (!modelsError && liveModels.length === 0) {
+      // give the fetch a moment; if still empty, flip to manual
+      const t = setTimeout(() => { if (liveModels.length === 0) setMode("manual"); }, 1500);
+      return () => clearTimeout(t);
+    }
+  }, [liveModels.length, modelsError]);
 
   async function startRecording() {
     try {
@@ -136,8 +148,8 @@ export default function Pass0Speech({ onAligned }: Props) {
     if (!transcripts) return;
     setAligning(true); setAlignError(null);
     const ensemble: Record<string, string> = { ...transcripts };
-    for (const s of manualSlots) {
-      if (s.key.trim() && s.text.trim()) ensemble[s.key.trim()] = s.text.trim();
+    for (const slot of manualSlots) {
+      if (slot.key.trim() && slot.text.trim()) ensemble[slot.key.trim()] = slot.text.trim();
     }
     try {
       onAligned(await api.align({ ensemble, source_model: sourceModel }));
@@ -146,16 +158,59 @@ export default function Pass0Speech({ onAligned }: Props) {
     } finally { setAligning(false); }
   }
 
-  const addSlot    = () => setManualSlots(p => [...p, { id: uid(), key: "", text: "" }]);
-  const removeSlot = (id: string) => setManualSlots(p => p.filter(s => s.id !== id));
+  async function handleAlignManual() {
+    setAlignError(null);
+    const filled = manualSlots
+      .map(sl => ({ key: sl.key.trim(), text: sl.text.trim() }))
+      .filter(sl => sl.key && sl.text);
+
+    if (filled.length < 2) {
+      setAlignError("Need at least 2 transcripts with both a model key and Urdu text");
+      return;
+    }
+    if (new Set(filled.map(f => f.key)).size !== filled.length) {
+      setAlignError("Model keys must be unique");
+      return;
+    }
+    const srcKey = manualSrc && filled.find(f => f.key === manualSrc) ? manualSrc : filled[0].key;
+    const ensemble: Record<string, string> = {};
+    filled.forEach(f => { ensemble[f.key] = f.text; });
+
+    setAligning(true);
+    try {
+      onAligned(await api.align({ ensemble, source_model: srcKey }));
+    } catch (e: unknown) {
+      setAlignError(e instanceof Error ? e.message : "Alignment failed");
+    } finally { setAligning(false); }
+  }
+
+  const addSlot    = () => setManualSlots(p => {
+    const next = [...p, { id: uid(), key: "", text: "" }];
+    if (!manualSrc && next.length === 1) setManualSrc("");
+    return next;
+  });
+  const removeSlot = (id: string) => setManualSlots(p => p.filter(sl => sl.id !== id));
   const updateSlot = (id: string, patch: Partial<ManualSlot>) =>
-    setManualSlots(p => p.map(s => s.id === id ? { ...s, ...patch } : s));
+    setManualSlots(p => p.map(sl => sl.id === id ? { ...sl, ...patch } : sl));
+
+  // Seed manual mode with 3 starter slots the first time it's opened
+  useEffect(() => {
+    if (mode === "manual" && manualSlots.length === 0) {
+      setManualSlots([
+        { id: uid(), key: "whisper-large",  text: "" },
+        { id: uid(), key: "seamless-large", text: "" },
+        { id: uid(), key: "wav2vec2-urdu",  text: "" },
+      ]);
+      setManualSrc("whisper-large");
+    }
+  }, [mode, manualSlots.length]);
 
   const hasAudio = !!(audio.file ?? audio.blob);
 
   return (
     <div className="space-y-6">
 
+      {/* ── Audio source ── */}
       {!hasAudio ? (
         <div className="space-y-3">
           <div
@@ -207,85 +262,184 @@ export default function Pass0Speech({ onAligned }: Props) {
         </div>
       )}
 
-      {modelsError ? <ErrorBanner msg={modelsError} /> : liveModels.length === 0 ? (
-        <p className={s.label}>No models online — start a Kaggle notebook</p>
-      ) : (
-        <div className={s.card}>
-          <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
-            <p className={s.label}>Live models</p>
-            <span className={s.labelDim}>{liveModels.length} online</span>
-          </div>
-          <div className="p-3 space-y-2">
-            {liveModels.map(m => {
-              const inList = whitelist.has(m.name);
-              const isSrc  = sourceModel === m.name;
-              return (
-                <div key={m.name} className={s.modelRow(isSrc, inList)}>
-                  <button onClick={() => toggleWhitelist(m.name)} className={s.btnCheck(inList)}>
-                    {inList && <span className="text-cyan-400 text-xs">✓</span>}
-                  </button>
-                  <span className="font-mono text-sm text-zinc-200 flex-1">{m.name}</span>
-                  <span className={s.labelDim}>{m.last_ping_ago}s ago</span>
-                  <button onClick={() => { setSourceModel(m.name); setWhitelist(p => new Set(p).add(m.name)); }}
-                    className={s.btnSrc(isSrc)}>
-                    {isSrc ? "★ SRC" : "SRC"}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* ── Mode toggle ── */}
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-1 flex gap-1">
+        {(["auto", "manual"] as Mode[]).map(m => (
+          <button
+            key={m}
+            onClick={() => setMode(m)}
+            className={`flex-1 py-2.5 px-4 rounded-lg font-mono text-xs tracking-widest uppercase transition-all ${
+              mode === m
+                ? "bg-zinc-800 text-zinc-100 shadow-inner"
+                : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/40"
+            }`}
+          >
+            <span className="flex items-center justify-center gap-2">
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                mode === m ? (m === "auto" ? "bg-cyan-400" : "bg-violet-400") : "bg-zinc-700"
+              }`} />
+              {m === "auto" ? "Auto · live ASR" : "Manual transcripts"}
+            </span>
+          </button>
+        ))}
+      </div>
 
-      {hasAudio && liveModels.length > 0 && !transcripts && (
-        <button onClick={handleTranscribe} disabled={transcribing || !whitelist.size} className={s.btnViolet}>
-          {transcribing ? "Transcribing..." : "Transcribe →"}
-        </button>
-      )}
-
-      <ErrorBanner msg={transError} />
-
-      {transcripts && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className={s.label}>Transcripts</p>
-            <button onClick={handleTranscribe} disabled={transcribing} className={s.btnGhost}>↺ Re-run</button>
-          </div>
-
-          <div className="space-y-2">
-            {Object.entries(transcripts).map(([model, text]) => {
-              const isSrc = model === sourceModel;
-              return (
-                <div key={model} className={s.transcript(isSrc)}>
-                  <div className={s.row}>
-                    <span className={`${s.label} flex-1`}>{model}</span>
-                    {isSrc && <span className="font-mono text-xs text-cyan-500">★ source</span>}
-                    <span className={`${s.labelDim} italic`}>readonly</span>
-                  </div>
-                  <p dir="rtl" className="w-full font-urdu text-base text-zinc-100 text-right px-1 leading-relaxed">{text}</p>
-                </div>
-              );
-            })}
-          </div>
-
-          {manualSlots.map(slot => (
-            <div key={slot.id} className="rounded-xl border border-zinc-800 bg-zinc-950 p-3 space-y-2">
-              <div className={s.row}>
-                <input type="text" value={slot.key} onChange={e => updateSlot(slot.id, { key: e.target.value })}
-                  placeholder="model key..." className={s.textInput} />
-                <div className="flex-1" />
-                <button onClick={() => removeSlot(slot.id)} className={s.btnDelete}>✕</button>
+      {/* ── AUTO MODE ── */}
+      {mode === "auto" && (
+        <>
+          {modelsError ? <ErrorBanner msg={modelsError} /> : liveModels.length === 0 ? (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <p className={s.label}>ASR registry empty</p>
               </div>
-              <textarea dir="rtl" rows={2} value={slot.text} onChange={e => updateSlot(slot.id, { text: e.target.value })}
-                placeholder="اردو متن یہاں لکھیں..." className={s.textarea} />
+              <p className="text-sm text-zinc-400 leading-relaxed">
+                No Kaggle GPU nodes are currently registered with the backend. To use auto-transcription,
+                start a Kaggle notebook so it self-registers via ngrok. In the meantime, switch to{" "}
+                <button onClick={() => setMode("manual")} className="underline decoration-violet-700 hover:text-violet-300">
+                  manual transcripts
+                </button>{" "}
+                to test the rest of the pipeline.
+              </p>
             </div>
-          ))}
+          ) : (
+            <div className={s.card}>
+              <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+                <p className={s.label}>Live models</p>
+                <span className={s.labelDim}>{liveModels.length} online</span>
+              </div>
+              <div className="p-3 space-y-2">
+                {liveModels.map(m => {
+                  const inList = whitelist.has(m.name);
+                  const isSrc  = sourceModel === m.name;
+                  return (
+                    <div key={m.name} className={s.modelRow(isSrc, inList)}>
+                      <button onClick={() => toggleWhitelist(m.name)} className={s.btnCheck(inList)}>
+                        {inList && <span className="text-cyan-400 text-xs">✓</span>}
+                      </button>
+                      <span className="font-mono text-sm text-zinc-200 flex-1">{m.name}</span>
+                      <span className={s.labelDim}>{m.last_ping_ago}s ago</span>
+                      <button onClick={() => { setSourceModel(m.name); setWhitelist(p => new Set(p).add(m.name)); }}
+                        className={s.btnSrc(isSrc)}>
+                        {isSrc ? "★ SRC" : "SRC"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-          <button onClick={addSlot} className={s.btnSm}>+ Add comparison transcript</button>
+          {hasAudio && liveModels.length > 0 && !transcripts && (
+            <button onClick={handleTranscribe} disabled={transcribing || !whitelist.size} className={s.btnViolet}>
+              {transcribing ? "Transcribing..." : "Transcribe →"}
+            </button>
+          )}
+
+          <ErrorBanner msg={transError} />
+
+          {transcripts && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className={s.label}>Transcripts</p>
+                <button onClick={handleTranscribe} disabled={transcribing} className={s.btnGhost}>↺ Re-run</button>
+              </div>
+
+              <div className="space-y-2">
+                {Object.entries(transcripts).map(([model, text]) => {
+                  const isSrc = model === sourceModel;
+                  return (
+                    <div key={model} className={s.transcript(isSrc)}>
+                      <div className={s.row}>
+                        <span className={`${s.label} flex-1`}>{model}</span>
+                        {isSrc && <span className="font-mono text-xs text-cyan-500">★ source</span>}
+                        <span className={`${s.labelDim} italic`}>readonly</span>
+                      </div>
+                      <p dir="rtl" className="w-full font-urdu text-base text-zinc-100 text-right px-1 leading-relaxed">{text}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {manualSlots.map(slot => (
+                <div key={slot.id} className="rounded-xl border border-zinc-800 bg-zinc-950 p-3 space-y-2">
+                  <div className={s.row}>
+                    <input type="text" value={slot.key} onChange={e => updateSlot(slot.id, { key: e.target.value })}
+                      placeholder="model key..." className={s.textInput} />
+                    <div className="flex-1" />
+                    <button onClick={() => removeSlot(slot.id)} className={s.btnDelete}>✕</button>
+                  </div>
+                  <textarea dir="rtl" rows={2} value={slot.text} onChange={e => updateSlot(slot.id, { text: e.target.value })}
+                    placeholder="اردو متن یہاں لکھیں..." className={s.textarea} />
+                </div>
+              ))}
+
+              <button onClick={addSlot} className={s.btnSm}>+ Add comparison transcript</button>
+
+              <ErrorBanner msg={alignError} />
+
+              <button onClick={handleAlign} disabled={aligning} className={s.btnPrimary}>
+                {aligning ? "Aligning..." : "Run Alignment →"}
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── MANUAL MODE ── */}
+      {mode === "manual" && (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-violet-900/60 bg-violet-950/10 px-4 py-3 flex items-start gap-3">
+            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0" />
+            <p className="text-sm text-violet-200 leading-relaxed">
+              <span className="font-mono text-xs text-violet-400 uppercase tracking-widest">Manual mode</span><br />
+              Paste model outputs from any source (Whisper, Seamless, Wav2Vec2, Gemini ASR, etc.).
+              Add at least two transcripts with unique model keys, mark one as <b>source</b>, then run alignment.
+              Audio is optional in this mode.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {manualSlots.map((slot) => {
+              const isSrc = manualSrc === slot.key && !!slot.key;
+              return (
+                <div key={slot.id} className={`rounded-xl border p-3 space-y-2 transition-colors ${isSrc ? "border-cyan-800 bg-cyan-950/20" : "border-zinc-800 bg-zinc-950"}`}>
+                  <div className={s.row}>
+                    <input
+                      type="text"
+                      value={slot.key}
+                      onChange={e => updateSlot(slot.id, { key: e.target.value })}
+                      placeholder="model key (e.g. whisper-large)"
+                      className={s.textInput}
+                    />
+                    <div className="flex-1" />
+                    <button
+                      onClick={() => slot.key.trim() && setManualSrc(slot.key.trim())}
+                      disabled={!slot.key.trim()}
+                      className={s.btnSrc(isSrc)}
+                    >
+                      {isSrc ? "★ SRC" : "SRC"}
+                    </button>
+                    <button onClick={() => removeSlot(slot.id)} className={s.btnDelete}>✕</button>
+                  </div>
+                  <textarea
+                    dir="rtl"
+                    rows={2}
+                    value={slot.text}
+                    onChange={e => updateSlot(slot.id, { text: e.target.value })}
+                    placeholder="اردو متن یہاں لکھیں..."
+                    className={s.textarea}
+                  />
+                </div>
+              );
+            })}
+
+            <button onClick={addSlot} className={s.btnSm}>+ Add another transcript</button>
+          </div>
 
           <ErrorBanner msg={alignError} />
 
-          <button onClick={handleAlign} disabled={aligning} className={s.btnPrimary}>
+          <button onClick={handleAlignManual} disabled={aligning} className={s.btnPrimary}>
             {aligning ? "Aligning..." : "Run Alignment →"}
           </button>
         </div>
