@@ -1,0 +1,194 @@
+\babel@toc {english}{}\relax 
+\contentsline {chapter}{Abstract}{1}{chapter*.2}%
+\contentsline {chapter}{Acknowledgements}{2}{chapter*.3}%
+\contentsline {chapter}{\numberline {1}Introduction}{3}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Background}{3}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}Limitations of Single-Model and Naive-Ensemble ASR}{4}{subsection.1.1.1}%
+\contentsline {section}{\numberline {1.2}Problem Statement}{5}{section.1.2}%
+\contentsline {subsection}{\numberline {1.2.1}Research Hypothesis}{6}{subsection.1.2.1}%
+\contentsline {section}{\numberline {1.3}Proposed Solution: Evolution of the CORAL Framework}{6}{section.1.3}%
+\contentsline {subsection}{\numberline {1.3.1}Iteration~1 Framing (FYP-1): ``Generate-and-Refine''}{6}{subsection.1.3.1}%
+\contentsline {subsection}{\numberline {1.3.2}Iteration~2 Reframing (FYP-2): A Five-Stage Post-Processing Pipeline}{7}{subsection.1.3.2}%
+\contentsline {subsection}{\numberline {1.3.3}Components Dropped from the FYP-1 Design}{8}{subsection.1.3.3}%
+\contentsline {subsection}{\numberline {1.3.4}Final Architecture at a Glance}{8}{subsection.1.3.4}%
+\contentsline {section}{\numberline {1.4}Project Objectives and Scope}{9}{section.1.4}%
+\contentsline {subsection}{\numberline {1.4.1}Deliverables}{10}{subsection.1.4.1}%
+\contentsline {section}{\numberline {1.5}Software Requirements Specification}{10}{section.1.5}%
+\contentsline {subsection}{\numberline {1.5.1}Functional Requirements}{11}{subsection.1.5.1}%
+\contentsline {subsection}{\numberline {1.5.2}Non-Functional Requirements}{12}{subsection.1.5.2}%
+\contentsline {section}{\numberline {1.6}Report Organisation}{13}{section.1.6}%
+\contentsline {section}{\numberline {1.7}Work Distribution}{14}{section.1.7}%
+\contentsline {section}{\numberline {1.8}Summary}{14}{section.1.8}%
+\contentsline {chapter}{\numberline {2}Literature Review}{16}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Related Research}{16}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Multi-ASR Fusion with LLM-Based Post-Editing}{16}{subsection.2.1.1}%
+\contentsline {subsubsection}{\numberline {2.1.1.1}Summary}{16}{subsubsection.2.1.1.1}%
+\contentsline {subsubsection}{\numberline {2.1.1.2}Critical Analysis}{16}{subsubsection.2.1.1.2}%
+\contentsline {subsubsection}{\numberline {2.1.1.3}Relationship to CORAL}{17}{subsubsection.2.1.1.3}%
+\contentsline {subsection}{\numberline {2.1.2}Comprehensive Urdu ASR Benchmarking}{17}{subsection.2.1.2}%
+\contentsline {subsubsection}{\numberline {2.1.2.1}Summary}{17}{subsubsection.2.1.2.1}%
+\contentsline {subsubsection}{\numberline {2.1.2.2}Critical Analysis}{17}{subsubsection.2.1.2.2}%
+\contentsline {subsubsection}{\numberline {2.1.2.3}Relationship to CORAL}{17}{subsubsection.2.1.2.3}%
+\contentsline {subsection}{\numberline {2.1.3}ROVER: Recognizer Output Voting Error Reduction}{18}{subsection.2.1.3}%
+\contentsline {subsubsection}{\numberline {2.1.3.1}Summary}{18}{subsubsection.2.1.3.1}%
+\contentsline {subsubsection}{\numberline {2.1.3.2}Critical Analysis}{18}{subsubsection.2.1.3.2}%
+\contentsline {subsubsection}{\numberline {2.1.3.3}Relationship to CORAL}{18}{subsubsection.2.1.3.3}%
+\contentsline {subsection}{\numberline {2.1.4}Hybrid-E2E ASR Ensemble for Low-Resource Irish}{19}{subsection.2.1.4}%
+\contentsline {subsubsection}{\numberline {2.1.4.1}Summary}{19}{subsubsection.2.1.4.1}%
+\contentsline {subsubsection}{\numberline {2.1.4.2}Critical Analysis}{19}{subsubsection.2.1.4.2}%
+\contentsline {subsubsection}{\numberline {2.1.4.3}Relationship to CORAL}{19}{subsubsection.2.1.4.3}%
+\contentsline {subsection}{\numberline {2.1.5}Code-Mixed ASR for Urdu--English}{19}{subsection.2.1.5}%
+\contentsline {subsubsection}{\numberline {2.1.5.1}Summary}{19}{subsubsection.2.1.5.1}%
+\contentsline {subsubsection}{\numberline {2.1.5.2}Critical Analysis}{20}{subsubsection.2.1.5.2}%
+\contentsline {subsubsection}{\numberline {2.1.5.3}Relationship to CORAL}{20}{subsubsection.2.1.5.3}%
+\contentsline {subsection}{\numberline {2.1.6}Confidence-Based Ensembles for ASR}{20}{subsection.2.1.6}%
+\contentsline {subsubsection}{\numberline {2.1.6.1}Summary}{20}{subsubsection.2.1.6.1}%
+\contentsline {subsubsection}{\numberline {2.1.6.2}Critical Analysis}{20}{subsubsection.2.1.6.2}%
+\contentsline {subsubsection}{\numberline {2.1.6.3}Relationship to CORAL}{20}{subsubsection.2.1.6.3}%
+\contentsline {subsection}{\numberline {2.1.7}Novel Confidence Estimation: TruCLeS}{21}{subsection.2.1.7}%
+\contentsline {subsubsection}{\numberline {2.1.7.1}Summary}{21}{subsubsection.2.1.7.1}%
+\contentsline {subsubsection}{\numberline {2.1.7.2}Critical Analysis}{21}{subsubsection.2.1.7.2}%
+\contentsline {subsubsection}{\numberline {2.1.7.3}Relationship to CORAL}{21}{subsubsection.2.1.7.3}%
+\contentsline {subsection}{\numberline {2.1.8}Domain-Specific LLM-Based ASR Correction}{21}{subsection.2.1.8}%
+\contentsline {subsubsection}{\numberline {2.1.8.1}Summary}{21}{subsubsection.2.1.8.1}%
+\contentsline {subsubsection}{\numberline {2.1.8.2}Critical Analysis}{22}{subsubsection.2.1.8.2}%
+\contentsline {subsubsection}{\numberline {2.1.8.3}Relationship to CORAL}{22}{subsubsection.2.1.8.3}%
+\contentsline {subsection}{\numberline {2.1.9}N-Best List Error Correction with LLMs}{22}{subsection.2.1.9}%
+\contentsline {subsubsection}{\numberline {2.1.9.1}Summary}{22}{subsubsection.2.1.9.1}%
+\contentsline {subsubsection}{\numberline {2.1.9.2}Critical Analysis}{22}{subsubsection.2.1.9.2}%
+\contentsline {subsubsection}{\numberline {2.1.9.3}Relationship to CORAL}{22}{subsubsection.2.1.9.3}%
+\contentsline {subsection}{\numberline {2.1.10}Delayed Fusion for LLM Integration in ASR}{23}{subsection.2.1.10}%
+\contentsline {subsubsection}{\numberline {2.1.10.1}Summary}{23}{subsubsection.2.1.10.1}%
+\contentsline {subsubsection}{\numberline {2.1.10.2}Critical Analysis}{23}{subsubsection.2.1.10.2}%
+\contentsline {subsubsection}{\numberline {2.1.10.3}Relationship to CORAL}{23}{subsubsection.2.1.10.3}%
+\contentsline {subsection}{\numberline {2.1.11}Parameter-Efficient Ensemble for Low-Resource Languages}{23}{subsection.2.1.11}%
+\contentsline {subsubsection}{\numberline {2.1.11.1}Summary}{23}{subsubsection.2.1.11.1}%
+\contentsline {subsubsection}{\numberline {2.1.11.2}Critical Analysis}{24}{subsubsection.2.1.11.2}%
+\contentsline {subsubsection}{\numberline {2.1.11.3}Relationship to CORAL}{24}{subsubsection.2.1.11.3}%
+\contentsline {subsection}{\numberline {2.1.12}Multi-Modal Data Augmentation}{24}{subsection.2.1.12}%
+\contentsline {subsubsection}{\numberline {2.1.12.1}Summary}{24}{subsubsection.2.1.12.1}%
+\contentsline {subsubsection}{\numberline {2.1.12.2}Critical Analysis}{24}{subsubsection.2.1.12.2}%
+\contentsline {subsubsection}{\numberline {2.1.12.3}Relationship to CORAL}{24}{subsubsection.2.1.12.3}%
+\contentsline {subsection}{\numberline {2.1.13}BK-Trees for Fuzzy String Search}{24}{subsection.2.1.13}%
+\contentsline {subsubsection}{\numberline {2.1.13.1}Summary}{24}{subsubsection.2.1.13.1}%
+\contentsline {subsubsection}{\numberline {2.1.13.2}Critical Analysis}{25}{subsubsection.2.1.13.2}%
+\contentsline {subsubsection}{\numberline {2.1.13.3}Relationship to CORAL}{25}{subsubsection.2.1.13.3}%
+\contentsline {subsection}{\numberline {2.1.14}Multi-ASR + SpeechLLM (Closest Concurrent System)}{25}{subsection.2.1.14}%
+\contentsline {subsubsection}{\numberline {2.1.14.1}Summary}{25}{subsubsection.2.1.14.1}%
+\contentsline {subsubsection}{\numberline {2.1.14.2}Critical Analysis}{25}{subsubsection.2.1.14.2}%
+\contentsline {subsubsection}{\numberline {2.1.14.3}Relationship to CORAL}{25}{subsubsection.2.1.14.3}%
+\contentsline {section}{\numberline {2.2}Analysis Summary of Research Items}{26}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Research Scope and Gaps}{29}{section.2.3}%
+\contentsline {paragraph}{Gap~1: Multi-ASR fusion methods optimised for low-resource scripts.}{29}{section.2.3}%
+\contentsline {paragraph}{Gap~2: Practical confidence utilisation without supervision.}{29}{section.2.3}%
+\contentsline {paragraph}{Gap~3: General-purpose, open-domain post-correction for low-resource languages.}{29}{section.2.3}%
+\contentsline {paragraph}{Gap~4: Fusion beyond ROVER for quality-heterogeneous ensembles.}{29}{section.2.3}%
+\contentsline {paragraph}{Gap~5: Efficient LLM integration for real-time deployment.}{29}{section.2.3}%
+\contentsline {paragraph}{Gap~6: Multi-model diversity at the word level.}{29}{section.2.3}%
+\contentsline {paragraph}{Gap~7: Word-level fusion with linguistic coherence.}{30}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Theoretical Foundation}{30}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}Ensemble Learning Theory}{30}{subsection.2.4.1}%
+\contentsline {subsection}{\numberline {2.4.2}Edit Distance and the Levenshtein Metric}{30}{subsection.2.4.2}%
+\contentsline {subsection}{\numberline {2.4.3}Confidence-Based and Consensus-Based Decision Making}{30}{subsection.2.4.3}%
+\contentsline {section}{\numberline {2.5}Summary}{31}{section.2.5}%
+\contentsline {chapter}{\numberline {3}Proposed Approach}{32}{chapter.3}%
+\contentsline {section}{\numberline {3.1}From the FYP-1 Generate-and-Refine Concept to the Deployed Pipeline}{32}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Conceptual Architecture (FYP-1)}{32}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Deployed Five-Stage Pipeline (FYP-2)}{33}{subsection.3.1.2}%
+\contentsline {section}{\numberline {3.2}Stage 0 -- Urdu Text Normalisation}{34}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Algorithm}{35}{subsection.3.2.1}%
+\contentsline {section}{\numberline {3.3}Stage 1 -- Weighted Split-Merge-Aware Alignment}{37}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Word-Level Weighted Levenshtein Alignment}{37}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Character-Level Split-Merge Classification}{38}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Combined \texttt {asr\_aligner} Routine}{39}{subsection.3.3.3}%
+\contentsline {section}{\numberline {3.4}Stage 2 -- OOV Detection and Candidate Ranking}{40}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Detection Criterion}{40}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}BK-Tree Construction}{41}{subsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.3}Candidate Retrieval and Ranking}{42}{subsection.3.4.3}%
+\contentsline {section}{\numberline {3.5}Stage 3 -- Consensus Voting and OOV Substitution}{44}{section.3.5}%
+\contentsline {section}{\numberline {3.6}Stage 4 -- LLM Refinement}{45}{section.3.6}%
+\contentsline {subsection}{\numberline {3.6.1}LLM Prompt Design}{45}{subsection.3.6.1}%
+\contentsline {subsection}{\numberline {3.6.2}Output Format and Hallucination Control}{47}{subsection.3.6.2}%
+\contentsline {subsection}{\numberline {3.6.3}Empirical Effect of Stage 4}{47}{subsection.3.6.3}%
+\contentsline {section}{\numberline {3.7}End-to-End System and Mathematical Model}{48}{section.3.7}%
+\contentsline {section}{\numberline {3.8}Worked Example}{49}{section.3.8}%
+\contentsline {section}{\numberline {3.9}Summary}{49}{section.3.9}%
+\contentsline {chapter}{\numberline {4}Implementation, Evaluation, and Results}{50}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Implementation}{50}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}System Topology}{50}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Technology Stack}{53}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}REST API}{54}{subsection.4.1.3}%
+\contentsline {subsection}{\numberline {4.1.4}Model Registry, Heartbeats, and Fan-out}{55}{subsection.4.1.4}%
+\contentsline {subsection}{\numberline {4.1.5}BK-Tree and N-gram Data Bootstrap}{56}{subsection.4.1.5}%
+\contentsline {subsection}{\numberline {4.1.6}Front-End Workflow (Four-Pass UI)}{57}{subsection.4.1.6}%
+\contentsline {paragraph}{Pass~0 / Mode Selection (\texttt {ModeSelector.tsx}).}{57}{subsection.4.1.6}%
+\contentsline {paragraph}{Pass~0 -- Speech Input (\texttt {Pass0Speech.tsx}).}{57}{subsection.4.1.6}%
+\contentsline {paragraph}{Pass~1 -- Input and Alignment (\texttt {Pass1Input.tsx}).}{57}{subsection.4.1.6}%
+\contentsline {paragraph}{Pass~2 -- OOV Sieve Scan (\texttt {Pass2Sieve.tsx}).}{57}{subsection.4.1.6}%
+\contentsline {paragraph}{Pass~3 -- Correction (\texttt {Pass3Correction.tsx}).}{57}{subsection.4.1.6}%
+\contentsline {subsection}{\numberline {4.1.7}Memory Management for Multi-Model Inference}{58}{subsection.4.1.7}%
+\contentsline {section}{\numberline {4.2}Evaluation Methodology}{58}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Datasets}{58}{subsection.4.2.1}%
+\contentsline {paragraph}{Common Voice Urdu (read speech).}{58}{subsection.4.2.1}%
+\contentsline {paragraph}{Conversational Urdu (CU benchmark).}{59}{subsection.4.2.1}%
+\contentsline {paragraph}{Iteration~1 baseline test set.}{59}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}ASR Models in the Final Ensemble}{59}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Evaluation Metrics}{59}{subsection.4.2.3}%
+\contentsline {paragraph}{Word Error Rate (WER).}{59}{subsection.4.2.3}%
+\contentsline {paragraph}{Character Error Rate (CER).}{60}{equation.4.2.1}%
+\contentsline {paragraph}{Expected Calibration Error (ECE) (Iteration~1 only).}{60}{equation.4.2.2}%
+\contentsline {paragraph}{Pipeline-stage categories.}{60}{equation.4.2.3}%
+\contentsline {section}{\numberline {4.3}Iteration~1 Baseline Results}{60}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Per-Model WER Baselines (10-Utterance Read-Speech Test Set)}{60}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Confidence Calibration (Iteration~1)}{61}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.3.3}Iteration~1 Stage-2 Synthetic Evaluation Summary}{61}{subsection.4.3.3}%
+\contentsline {subsection}{\numberline {4.3.4}Findings That Drove the FYP-2 Redesign}{62}{subsection.4.3.4}%
+\contentsline {section}{\numberline {4.4}Iteration~2 Results: Common Voice Urdu (Read Speech)}{63}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}WER Across Pipeline Stages and Source Models}{64}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}CER Across Pipeline Stages and Source Models}{64}{subsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.4.3}Relative WER Reduction per Source Model}{64}{subsection.4.4.3}%
+\contentsline {subsection}{\numberline {4.4.4}Pipeline Progression and WER--CER Trajectory}{65}{subsection.4.4.4}%
+\contentsline {subsection}{\numberline {4.4.5}Split-Merge Alignment Analysis}{66}{subsection.4.4.5}%
+\contentsline {subsection}{\numberline {4.4.6}Token Overlap Analysis}{66}{subsection.4.4.6}%
+\contentsline {section}{\numberline {4.5}Iteration~2 Ablation Study (Conversational Urdu)}{67}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Ablation Configurations}{67}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Main Ablation Results}{67}{subsection.4.5.2}%
+\contentsline {subsection}{\numberline {4.5.3}Component-Level Analysis}{68}{subsection.4.5.3}%
+\contentsline {paragraph}{Normalisation (C0 $\to $ C1): $-1.9$ WER.}{68}{subsection.4.5.3}%
+\contentsline {paragraph}{Weighted vs.\ Binary Alignment (C2 $\to $ C3): $-0.7$ WER.}{68}{subsection.4.5.3}%
+\contentsline {paragraph}{OOV Detection vs.\ Correction (C4 $\to $ C5): $-1.5$ WER.}{68}{subsection.4.5.3}%
+\contentsline {paragraph}{Consensus Voting (C5 $\to $ C6): $-1.1$ WER.}{69}{subsection.4.5.3}%
+\contentsline {paragraph}{LLM Refinement (C6 $\to $ C7): $-2.5$ WER.}{69}{subsection.4.5.3}%
+\contentsline {subsection}{\numberline {4.5.4}Ensemble Size Sensitivity}{70}{subsection.4.5.4}%
+\contentsline {subsection}{\numberline {4.5.5}OOV Threshold Sensitivity}{70}{subsection.4.5.5}%
+\contentsline {subsection}{\numberline {4.5.6}Residual Error Analysis}{70}{subsection.4.5.6}%
+\contentsline {subsection}{\numberline {4.5.7}Comparison with Baselines}{71}{subsection.4.5.7}%
+\contentsline {section}{\numberline {4.6}Challenges and Solutions}{72}{section.4.6}%
+\contentsline {paragraph}{Memory constraints.}{72}{section.4.6}%
+\contentsline {paragraph}{Arabic--Urdu Unicode conflation.}{72}{section.4.6}%
+\contentsline {paragraph}{Word-boundary disagreement.}{72}{section.4.6}%
+\contentsline {paragraph}{Quality heterogeneity in the ensemble.}{73}{section.4.6}%
+\contentsline {paragraph}{LLM hallucination risk.}{73}{section.4.6}%
+\contentsline {paragraph}{LLM API key exposure.}{74}{section.4.6}%
+\contentsline {section}{\numberline {4.7}Summary}{74}{section.4.7}%
+\contentsline {chapter}{\numberline {5}Conclusion and Future Work}{76}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Conclusion}{76}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Future Work}{78}{section.5.2}%
+\contentsline {paragraph}{1. Confidence-weighted voting.}{78}{section.5.2}%
+\contentsline {paragraph}{2. Code-switching-aware normalisation.}{78}{section.5.2}%
+\contentsline {paragraph}{3. Named-entity gazetteer.}{78}{section.5.2}%
+\contentsline {paragraph}{4. LLM-guided top-$K$ OOV re-ranking.}{78}{section.5.2}%
+\contentsline {paragraph}{5. Split/merge metadata utilisation in the voting stage.}{78}{section.5.2}%
+\contentsline {paragraph}{6. Word-level confidence from acoustic models.}{78}{section.5.2}%
+\contentsline {paragraph}{7. Larger-scale conversational evaluation.}{79}{section.5.2}%
+\contentsline {paragraph}{8. Real-time streaming integration.}{79}{section.5.2}%
+\contentsline {paragraph}{9. Adaptation to other low-resource languages.}{79}{section.5.2}%
+\contentsline {paragraph}{10. Open release.}{79}{section.5.2}%
+\contentsline {chapter}{\numberline {A}Unicode Normalisation Mapping}{80}{appendix.A}%
+\contentsline {chapter}{\numberline {B}REST API Specifications}{82}{appendix.B}%
+\contentsline {section}{\numberline {B.1}POST /align}{82}{section.B.1}%
+\contentsline {section}{\numberline {B.2}POST /oov}{83}{section.B.2}%
+\contentsline {section}{\numberline {B.3}POST /correct}{83}{section.B.3}%
+\contentsline {section}{\numberline {B.4}Registry endpoints}{84}{section.B.4}%
+\contentsline {chapter}{\numberline {C}CORAL Source File Inventory}{85}{appendix.C}%
+\contentsline {chapter}{References}{88}{appendix*.48}%

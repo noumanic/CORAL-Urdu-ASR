@@ -1,0 +1,157 @@
+\chapter{Unicode Normalisation Mapping}
+\label{app:unicode-table}
+
+Table~\ref{tab:unicode-mapping} contains the seven canonical Arabic-to-Urdu Unicode substitutions applied by the Stage~0 \texttt{normalize\_urdu} routine.
+
+\begin{table}[h]
+    \centering
+    \renewcommand{\arraystretch}{1.30}
+    \small
+    \begin{tabular}{p{3.2cm}cp{3.0cm}cp{3.2cm}}
+    \toprule
+    \textbf{Source character} & \textbf{Source U+} & \textbf{Target character} & \textbf{Target U+} & \textbf{Effect} \\
+    \midrule
+    Arabic KAF                & U+0643 & Urdu KEHEH    & U+06A9 & Phonetically equivalent k \\
+    Arabic HEH                & U+0647 & Urdu HEH GOAL & U+06C1 & Final h normalisation \\
+    ALEF MAQSURA              & U+0649 & Farsi YEH     & U+06CC & Final ya normalisation \\
+    TEH MARBUTA               & U+0629 & Urdu HEH GOAL & U+06C1 & Loanword-final t / h \\
+    ALEF + HAMZA ABOVE        & U+0623 & ALEF          & U+0627 & Drop word-initial hamza \\
+    ALEF + HAMZA BELOW        & U+0625 & ALEF          & U+0627 & Drop word-initial hamza \\
+    Arabic YEH                & U+064A & Farsi YEH     & U+06CC & Medial / final ya \\
+    \bottomrule
+    \end{tabular}
+    \caption{Arabic-to-Urdu character substitutions applied in Stage~0 normalisation.}
+    \label{tab:unicode-mapping}
+\end{table}
+
+In addition to these substitutions, Stage~0 also strips:
+\begin{itemize}
+    \item Arabic diacritics: U+0610--U+061A and U+064B--U+065F.
+    \item Superscript alef: U+0670.
+    \item Tatweel / kashida: U+0640.
+    \item Zero-width and directional control characters: U+200B--U+200F, U+202A--U+202E, U+2060--U+206F, U+FEFF.
+    \item Urdu punctuation block: U+060C, U+060D, U+060E, U+060F, U+061B, U+061F, U+06D4 (Urdu full stop).
+    \item Extended Arabic punctuation: U+0600--U+060C, U+060E--U+061F.
+    \item All ASCII punctuation, symbols, letters, and digits.
+\end{itemize}
+
+\chapter{REST API Specifications}
+\label{app:api-spec}
+
+This appendix records the full request and response schemas for the three pipeline endpoints. The implementation lives in \texttt{coral\_app/backend/pipeline/pipeline\_api.py}.
+
+\section{POST /align}
+\label{app:align}
+
+Aligns each companion-model hypothesis to the named source-model hypothesis using weighted Levenshtein distance, then runs the secondary character-level alignment for split-merge classification.
+
+\begin{lstlisting}[caption={Request body schema for \texttt{POST /align}.}]
+{
+  "ensemble":     { "model_name": "raw transcript text", ... },
+  "source_model": "model_name"
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Response body schema for \texttt{POST /align}.}]
+{
+  "source_model": "model_name",
+  "<model_name>": {
+    "normalized_attempt":          ["w1", "w2", ...],
+    "aligned_attempt":             ["w1", "w2", ...],
+    "aligned_info":                ["MATCH", "SUBSTITUTION", ...],
+    "split_merge_aligned_attempt": ["chunk1", "chunk2", ...],
+    "split_merge_metadata":        ["SAME", "SPLIT", "NOISE", ...],
+    "split_merge_metadata_base":   ["SAME", "MERGE", ...],
+    "split_merge_aligned_info":    ["MATCH", "INSERTION", ...]
+  },
+  ... (one block per model) ...
+}
+\end{lstlisting}
+
+\section{POST /oov}
+\label{app:oov}
+
+Detects OOV tokens using the dual model-disagreement + frequency criterion and ranks correction candidates by edit-distance + n-gram support.
+
+\begin{lstlisting}[caption={Request body schema for \texttt{POST /oov}.}]
+{
+  "align_info":  { ...alignment dict from /align... },
+  "freq_cutoff": 2000,    // optional, default 2000
+  "depth":       50,      // optional, BK-tree depth limit
+  "top_n":       10       // optional, candidates to return per token
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Response body schema for \texttt{POST /oov}.}]
+{
+  "oov_dict": ["oov_word_1", "oov_word_2", ...],
+  "metadata": {
+    "oov_word_1": {
+      "candidate_1": [edit_dist, tri_present, bi_present,
+                      uni_present, tri_freq, bi_freq, uni_freq],
+      "candidate_2": [...],
+      ...
+    },
+    ...
+  },
+  "columns": ["word", "Dist", "Trigram", "Bigram", "Unigram",
+              "Trifrequency", "Bifrequency", "Unifrequency"]
+}
+\end{lstlisting}
+
+\section{POST /correct}
+\label{app:correct}
+
+Applies the consensus voting algorithm to the alignment output, with OOV substitution overriding voting at flagged positions.
+
+\begin{lstlisting}[caption={Request body schema for \texttt{POST /correct}.}]
+{
+  "align_info":   { ...alignment dict from /align... },
+  "oov_metadata": { ...metadata dict from /oov...    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Response body schema for \texttt{POST /correct}.}]
+{
+  "corrected": "final corrected Urdu transcript",
+  "source":    "source model normalised transcript",
+  "diff": [
+    { "pos": 3, "original": "x", "corrected": "y" },
+    ...
+  ]
+}
+\end{lstlisting}
+
+\section{Registry endpoints}
+\label{app:registry}
+
+The model registry is mounted at the \texttt{/registry} prefix and provides four endpoints (Section~\ref{ssec:registry}):
+\begin{itemize}
+    \item \texttt{GET /registry/models} -- list live models with seconds-since-last-ping.
+    \item \texttt{POST /registry/register} -- Kaggle notebook self-registration. Auth: \texttt{X-Registry-Token}.
+    \item \texttt{POST /registry/ping} -- 60-second heartbeat. Auth: \texttt{X-Registry-Token}.
+    \item \texttt{POST /registry/transcribe} -- multipart audio upload, fan-out to live models, parallel response collection. Auth: \texttt{X-API-Token}.
+\end{itemize}
+
+\chapter{CORAL Source File Inventory}
+\label{app:source-inventory}
+
+The CORAL source repository (\texttt{C:\textbackslash Users\textbackslash *\textbackslash Desktop\textbackslash CORAL-Urdu-ASR}) contains:
+
+\begin{itemize}
+    \item \texttt{coral\_app/backend/main\_app.py} -- FastAPI entry point combining the pipeline and registry routers.
+    \item \texttt{coral\_app/backend/pipeline/pipeline\_api.py} -- the three pipeline endpoints.
+    \item \texttt{coral\_app/backend/pipeline/coral\_pipeline\_functions.py} -- \texttt{asr\_aligner}, \texttt{build\_oov\_dict}, \texttt{extract\_oov\_metadata}, \texttt{apply\_corrections}.
+    \item \texttt{coral\_app/backend/pipeline/coral\_utility\_functions.py} -- \texttt{normalize\_urdu}, \texttt{levenshtein}, \texttt{generate\_alignment\_data}, \texttt{is\_oov}, n-gram lookups.
+    \item \texttt{coral\_app/backend/pipeline/bktree.py} -- \texttt{BKTree} and \texttt{BKNode} data structures.
+    \item \texttt{coral\_app/backend/pipeline/coral\_data\_downloader.py} -- HuggingFace download + DuckDB bootstrap.
+    \item \texttt{coral\_app/backend/model\_registery/registery\_api.py} -- model registry, eviction sweep, fan-out transcription.
+    \item \texttt{coral\_app/frontend/my-next-app/app/} -- Next.js front-end (\texttt{ModeSelector.tsx}, \texttt{Pass0Speech.tsx}, \texttt{Pass1Input.tsx}, \texttt{Pass2Sieve.tsx}, \texttt{Pass3Correction.tsx}, \texttt{lib/api.ts}).
+    \item \texttt{model\_deploy\_kaggle\_notebooks/whisper\_large\_kaggle.ipynb}, \texttt{seamless\_large\_kaggle.ipynb} -- Kaggle GPU inference notebooks.
+    \item \texttt{generate\_ngrams.ipynb} -- offline n-gram + BK-tree generation pipeline for the HuggingFace bucket.
+    \item \texttt{urdu\_asr\_benchmark.ipynb}, \texttt{urdu\_asr\_pipeline.ipynb} -- offline batch evaluation notebooks.
+    \item \texttt{asr\_results/}, \texttt{asr\_ensemble/}, \texttt{asr\_evaluation/} -- per-model raw / ensemble / evaluation TSVs.
+    \item \texttt{corpus/}, \texttt{vocab/}, \texttt{metadata/} -- reference transcriptions, vocabulary, clip-duration metadata.
+    \item \texttt{audios/} -- raw audio sample files.
+    \item \texttt{docs/} -- architecture diagrams, the FYP-1 and FYP-2 final reports, and this report.
+\end{itemize}

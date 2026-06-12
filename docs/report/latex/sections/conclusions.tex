@@ -1,0 +1,54 @@
+\chapter{Conclusion and Future Work}
+\label{chap:conclusion}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+This project designed, implemented, deployed, and empirically evaluated CORAL, a five-stage post-processing pipeline for low-resource Urdu ASR. The work was carried out across two iterations of the FAST-NUCES Final Year Project, and this final report consolidates both iterations into a single integrated narrative.
+
+The defining technical contribution of CORAL is a \emph{split-merge-aware alignment algorithm} that treats word-boundary disagreement between ASR back-ends as a first-class phenomenon, classifying each aligned chunk as SAME, SPLIT, MERGE, or NOISE. Our empirical analysis on the 500-utterance Conversational Urdu sample shows that SPLIT and MERGE events together account for 36.5\% of all alignment events --- making segmentation disagreement the dominant inter-model divergence in Urdu ASR ensembles, ahead of pure lexical substitution. Existing fusion methods such as ROVER, designed for English-style space-delimited scripts, misinterpret these events as substitutions or insert--delete pairs, corrupting the voting signal. CORAL exposes the metadata and acts on it.
+
+On the 2{,}995-utterance Common Voice Urdu evaluation, the deployed pipeline (\texttt{robust} category) reduces WER from 18.45\% to 14.34\% on the Seamless-Large source (a 22.3\% relative improvement), from 28.29\% to 19.97\% on Whisper-Large-v3 (29.4\% relative), from 40.44\% to 30.64\% on Whisper-Medium (24.2\% relative), and from 53.52\% to 39.67\% on Wav2Vec2-Urdu (25.9\% relative). On conversational Urdu, the full C7 pipeline (with the Stage~4 LLM refinement) reaches 10.6\% WER from a 19.8\% Whisper-Large-v3 baseline --- a \textbf{46.5\% relative improvement} that places CORAL slightly ahead of the closest concurrent system (Multi-ASR + SpeechLLM at 11.3\%) while avoiding the heavy cost of running a full SpeechLLM audio inference pass during alignment.
+
+The seven-step ablation study on the Conversational Urdu benchmark demonstrates that every CORAL component makes a measurable, additive contribution. No single component alone explains the gain; the system is genuinely compositional. The Stage~4 LLM delivers the largest single-component gain (2.5 WER points), while Stage~0 Urdu normalisation --- a zero-cost, zero-risk fix --- contributes 1.9 WER points and confirms that a substantial fraction of apparent ASR errors are measurement artefacts caused by Arabic--Urdu Unicode-variant mismatches rather than genuine recognition failures.
+
+The project also demonstrates the value of revisiting design decisions in light of empirical findings. The original FYP-1 architecture framed CORAL as a two-stage \emph{Generate-and-Refine} system in which an instruction-tuned LLM would arbitrate between confidence-annotated multi-model hypotheses. Iteration~1 evaluation revealed that confidence scores from heterogeneous architectures lived on incompatible scales, that synthetic hypotheses did not capture the dominant real-world failure modes (Unicode conflation and segmentation disagreement), and that the LLM was more useful as a refinement layer than as the primary fusion mechanism. The FYP-2 redesign therefore reframed the system as a five-stage post-processing pipeline (Stages~0--4) and dropped, replaced, or de-emphasised five FYP-1 elements documented in Section~\ref{ssec:dropped-components}: word-level confidence extraction from Whisper and Wav2Vec2, Expected Calibration Error as a primary metric, the synthetic 20-sample evaluation with calibration regimes, the Alif-1.0-8B-Instruct LLM, and the two-stage Generate-and-Refine framing itself. The FYP-2 system replaces these with deterministic algorithmic components (split-merge alignment, OOV detection, voting) followed by an LLM refinement layer that consumes structured metadata and is constrained by the upstream pipeline's authority limits.
+
+Beyond the algorithmic contributions, the project delivers a complete deployable system: a FastAPI backend exposing three pipeline endpoints plus a model registry; a Next.js + React front-end implementing a four-pass user workflow with both file-upload and live-speech modes and animated alignment visualisations; Kaggle GPU notebooks that self-register through ngrok HTTPS tunnels and provide live ASR inference; a HuggingFace-hosted BK-tree and n-gram corpus loaded into DuckDB at server startup; and an open evaluation framework producing reproducible per-stage WER and CER metrics.
+
+We answer the research hypothesis stated in Section~\ref{ssec:hypothesis} affirmatively: combining Urdu-specific Unicode normalisation, weighted split-merge-aware alignment of multiple ASR hypotheses, hybrid OOV detection and correction with BK-tree fuzzy lookup ranked by an n-gram language model, conservative position-wise voting, and targeted LLM refinement of the voted output \emph{is} sufficient to substantially reduce WER over the strongest single-model baseline on both read-speech and conversational Urdu, without requiring any fine-tuning of the underlying acoustic models.
+
+\section{Future Work}
+\label{sec:future-work}
+
+The residual-error analysis (Section~\ref{ssec:residual-errors}) and the ablation study identify several concrete directions for follow-up research.
+
+\paragraph{1. Confidence-weighted voting.}
+All companion models currently receive equal voting weight. Model-specific WER priors used as confidence weights in Stage~3 voting --- in particular giving Whisper-Large or Seamless-Large a multiplicative weight $>$1 --- are estimated to yield a further $\sim$0.3 WER point reduction. This directly addresses the canonical ROVER failure mode observed on the read-speech benchmark, where three companions of WER 1.6$\times$--3.6$\times$ higher than the source collectively outvote the source on disagreement positions.
+
+\paragraph{2. Code-switching-aware normalisation.}
+Stage~0 currently strips all ASCII characters, deferring code-switched English to the LLM. A future mode will preserve English tokens and pass them through a bilingual alignment stage that explicitly handles Urdu--English code-switching, directly targeting the 21.5\% of residual errors attributable to code-switching identified in Table~\ref{tab:residual}.
+
+\paragraph{3. Named-entity gazetteer.}
+27.7\% of residual errors are proper nouns. A curated Urdu named-entity list (toponyms, person names, organisation names, brand names) integrated into the BK-tree lookup would directly address the dominant failure mode. The integration is straightforward: the gazetteer would be loaded as a high-priority secondary BK-tree consulted when the primary BK-tree does not return a high-confidence candidate.
+
+\paragraph{4. LLM-guided top-$K$ OOV re-ranking.}
+The current OOV correction is greedy top-1. Passing the top-3 BK-tree candidates to the Stage~4 LLM for context-aware re-ranking would reduce overcorrection errors (currently 7.2\% of residual errors) by giving the LLM the option to keep the original token when none of the candidates is a clear improvement.
+
+\paragraph{5. Split/merge metadata utilisation in the voting stage.}
+CORAL computes rich SAME/SPLIT/MERGE/NOISE metadata per token in Stage~1 but does not yet use it in the Stage~3 correction decision. Incorporating alignment type into the voting logic (e.g.\ different resolution strategies for SPLIT vs.\ SUBSTITUTION events) could reduce word-boundary errors further.
+
+\paragraph{6. Word-level confidence from acoustic models.}
+The FYP-1 architecture-specific confidence-extraction methodology was de-emphasised in FYP-2 because raw confidences from heterogeneous architectures lived on incompatible scales. A learned cross-architecture confidence calibration --- e.g.\ a TruCLeS-style~\cite{trucles2025} metric trained on a small labelled Urdu development set --- could provide reliable per-word uncertainty estimates that would improve both the voting stage and the LLM's arbitration.
+
+\paragraph{7. Larger-scale conversational evaluation.}
+The 500-clip Conversational Urdu sample used in the ablation study is a useful but limited test set. Scaling the evaluation to thousands of conversational clips --- particularly including more varied dialects, age groups, and acoustic conditions --- will firm up the empirical claims and may expose new failure modes.
+
+\paragraph{8. Real-time streaming integration.}
+CORAL is currently a batch-mode post-processor. A streaming variant that operates on partial hypotheses as they arrive from the ASR back-ends, emitting partial corrected transcripts with bounded latency, would unlock real-time captioning use cases.
+
+\paragraph{9. Adaptation to other low-resource languages.}
+The CORAL architecture is not Urdu-specific. The Stage~0 normalisation table, BK-tree corpus, and n-gram corpus would need to be replaced for each target language, but Stages~1--4 transfer directly. A natural next step is to validate the architecture on other low-resource languages of the South Asian subcontinent (Pashto, Sindhi, Punjabi).
+
+\paragraph{10. Open release.}
+The complete CORAL source code, evaluation TSV, BK-tree, and n-gram corpus are released under permissive licences in the project repository. We hope this enables further research on low-resource Urdu ASR post-processing.

@@ -1,0 +1,214 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\pp@pagectr{footnote}{4}{59}{50}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Implementation, Evaluation, and Results}{50}{chapter.4}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{loa}{\addvspace {10\p@ }}
+\newlabel{chap:implementation}{{4}{50}{Implementation, Evaluation, and Results}{chapter.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}Implementation}{50}{section.4.1}\protected@file@percent }
+\newlabel{sec:implementation}{{4.1}{50}{Implementation}{section.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.1}System Topology}{50}{subsection.4.1.1}\protected@file@percent }
+\newlabel{ssec:topology}{{4.1.1}{50}{System Topology}{subsection.4.1.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces CORAL four-tier system architecture}}{51}{figure.caption.15}\protected@file@percent }
+\newlabel{fig:system-architecture}{{4.1}{51}{CORAL four-tier system architecture}{figure.caption.15}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces CORAL deployment topology}}{52}{figure.caption.16}\protected@file@percent }
+\newlabel{fig:deployment-topology}{{4.2}{52}{CORAL deployment topology}{figure.caption.16}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.2}Technology Stack}{53}{subsection.4.1.2}\protected@file@percent }
+\newlabel{ssec:tech-stack}{{4.1.2}{53}{Technology Stack}{subsection.4.1.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.3}{\ignorespaces CORAL backend component diagram}}{53}{figure.caption.17}\protected@file@percent }
+\newlabel{fig:components-diagram}{{4.3}{53}{CORAL backend component diagram}{figure.caption.17}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.3}REST API}{54}{subsection.4.1.3}\protected@file@percent }
+\newlabel{ssec:rest-api}{{4.1.3}{54}{REST API}{subsection.4.1.3}{}}
+\newlabel{lst:rest-api}{{4.1}{54}{REST API entry points (\texttt {pipeline\_api.py})}{lstlisting.4.1}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.1}{\ignorespaces REST API entry points (\texttt  {pipeline\_api.py}).}}{54}{lstlisting.4.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.4}{\ignorespaces CORAL live-speech sequence diagram}}{55}{figure.caption.18}\protected@file@percent }
+\newlabel{fig:sequence-diagram}{{4.4}{55}{CORAL live-speech sequence diagram}{figure.caption.18}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.4}Model Registry, Heartbeats, and Fan-out}{55}{subsection.4.1.4}\protected@file@percent }
+\newlabel{ssec:registry}{{4.1.4}{55}{Model Registry, Heartbeats, and Fan-out}{subsection.4.1.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.5}{\ignorespaces Registry entry state machine}}{56}{figure.caption.19}\protected@file@percent }
+\newlabel{fig:registry-state}{{4.5}{56}{Registry entry state machine}{figure.caption.19}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.5}BK-Tree and N-gram Data Bootstrap}{56}{subsection.4.1.5}\protected@file@percent }
+\newlabel{ssec:data-bootstrap}{{4.1.5}{56}{BK-Tree and N-gram Data Bootstrap}{subsection.4.1.5}{}}
+\newlabel{lst:duckdb-bootstrap}{{4.2}{56}{DuckDB n-gram table bootstrap (\texttt {coral\_data\_downloader.py})}{lstlisting.4.2}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.2}{\ignorespaces DuckDB n-gram table bootstrap (\texttt  {coral\_data\_downloader.py}).}}{56}{lstlisting.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.6}Front-End Workflow (Four-Pass UI)}{57}{subsection.4.1.6}\protected@file@percent }
+\newlabel{ssec:frontend}{{4.1.6}{57}{Front-End Workflow (Four-Pass UI)}{subsection.4.1.6}{}}
+\@writefile{toc}{\contentsline {paragraph}{Pass~0 / Mode Selection (\texttt  {ModeSelector.tsx}).}{57}{subsection.4.1.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Pass~0 -- Speech Input (\texttt  {Pass0Speech.tsx}).}{57}{subsection.4.1.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Pass~1 -- Input and Alignment (\texttt  {Pass1Input.tsx}).}{57}{subsection.4.1.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Pass~2 -- OOV Sieve Scan (\texttt  {Pass2Sieve.tsx}).}{57}{subsection.4.1.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Pass~3 -- Correction (\texttt  {Pass3Correction.tsx}).}{57}{subsection.4.1.6}\protected@file@percent }
+\citation{ardila2020common}
+\citation{arif2024wer}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.6}{\ignorespaces Front-end four-pass workflow state diagram}}{58}{figure.caption.20}\protected@file@percent }
+\newlabel{fig:frontend-workflow}{{4.6}{58}{Front-end four-pass workflow state diagram}{figure.caption.20}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.7}Memory Management for Multi-Model Inference}{58}{subsection.4.1.7}\protected@file@percent }
+\newlabel{ssec:memory}{{4.1.7}{58}{Memory Management for Multi-Model Inference}{subsection.4.1.7}{}}
+\newlabel{lst:cleanup}{{4.3}{58}{Sequential model loading with explicit cleanup (Iteration~1)}{lstlisting.4.3}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.3}{\ignorespaces Sequential model loading with explicit cleanup (Iteration~1).}}{58}{lstlisting.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}Evaluation Methodology}{58}{section.4.2}\protected@file@percent }
+\newlabel{sec:eval-method}{{4.2}{58}{Evaluation Methodology}{section.4.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}Datasets}{58}{subsection.4.2.1}\protected@file@percent }
+\newlabel{ssec:datasets}{{4.2.1}{58}{Datasets}{subsection.4.2.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Common Voice Urdu (read speech).}{58}{subsection.4.2.1}\protected@file@percent }
+\citation{arif2024wer}
+\@writefile{toc}{\contentsline {paragraph}{Conversational Urdu (CU benchmark).}{59}{subsection.4.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Iteration~1 baseline test set.}{59}{subsection.4.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}ASR Models in the Final Ensemble}{59}{subsection.4.2.2}\protected@file@percent }
+\newlabel{ssec:asr-models}{{4.2.2}{59}{ASR Models in the Final Ensemble}{subsection.4.2.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.1}{\ignorespaces ASR models in the CORAL read-speech ensemble. Raw-WER computed on the 2{,}995-utterance Common Voice Urdu evaluation set \emph  {before} Stage~0 normalisation (\texttt  {ensemble\_correction\_eval.tsv}, \texttt  {category=untouched}).}}{59}{table.caption.21}\protected@file@percent }
+\newlabel{tab:read-ensemble}{{4.1}{59}{ASR models in the CORAL read-speech ensemble. Raw-WER computed on the 2{,}995-utterance Common Voice Urdu evaluation set \emph {before} Stage~0 normalisation (\texttt {ensemble\_correction\_eval.tsv}, \texttt {category=untouched})}{table.caption.21}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}Evaluation Metrics}{59}{subsection.4.2.3}\protected@file@percent }
+\newlabel{ssec:metrics}{{4.2.3}{59}{Evaluation Metrics}{subsection.4.2.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Word Error Rate (WER).}{59}{subsection.4.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Character Error Rate (CER).}{60}{equation.4.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Expected Calibration Error (ECE) (Iteration~1 only).}{60}{equation.4.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Pipeline-stage categories.}{60}{equation.4.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}Iteration~1 Baseline Results}{60}{section.4.3}\protected@file@percent }
+\newlabel{sec:iter1-results}{{4.3}{60}{Iteration~1 Baseline Results}{section.4.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}Per-Model WER Baselines (10-Utterance Read-Speech Test Set)}{60}{subsection.4.3.1}\protected@file@percent }
+\newlabel{ssec:iter1-wer}{{4.3.1}{60}{Per-Model WER Baselines (10-Utterance Read-Speech Test Set)}{subsection.4.3.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.2}{\ignorespaces Iteration~1 baseline WER per model on the 10-utterance read-speech test set.}}{61}{table.caption.22}\protected@file@percent }
+\newlabel{tab:iter1-wer}{{4.2}{61}{Iteration~1 baseline WER per model on the 10-utterance read-speech test set}{table.caption.22}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.7}{\ignorespaces Iteration~1 baseline mean WER per model. Whisper-Large achieves the strongest single-model performance.}}{61}{figure.caption.23}\protected@file@percent }
+\newlabel{fig:iter1-baseline}{{4.7}{61}{Iteration~1 baseline mean WER per model. Whisper-Large achieves the strongest single-model performance}{figure.caption.23}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}Confidence Calibration (Iteration~1)}{61}{subsection.4.3.2}\protected@file@percent }
+\newlabel{ssec:iter1-ece}{{4.3.2}{61}{Confidence Calibration (Iteration~1)}{subsection.4.3.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.3}Iteration~1 Stage-2 Synthetic Evaluation Summary}{61}{subsection.4.3.3}\protected@file@percent }
+\newlabel{ssec:iter1-stage2}{{4.3.3}{61}{Iteration~1 Stage-2 Synthetic Evaluation Summary}{subsection.4.3.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.8}{\ignorespaces Iteration~1 WER distribution per model (box plots over the 10-utterance test set).}}{62}{figure.caption.24}\protected@file@percent }
+\newlabel{fig:iter1-distribution}{{4.8}{62}{Iteration~1 WER distribution per model (box plots over the 10-utterance test set)}{figure.caption.24}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.3}{\ignorespaces Iteration~1 confidence calibration analysis.}}{62}{table.caption.25}\protected@file@percent }
+\newlabel{tab:iter1-ece}{{4.3}{62}{Iteration~1 confidence calibration analysis}{table.caption.25}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.4}Findings That Drove the FYP-2 Redesign}{62}{subsection.4.3.4}\protected@file@percent }
+\newlabel{ssec:iter1-findings}{{4.3.4}{62}{Findings That Drove the FYP-2 Redesign}{subsection.4.3.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.9}{\ignorespaces Iteration~1 Expected Calibration Error per ASR model. Lower is better.}}{63}{figure.caption.26}\protected@file@percent }
+\newlabel{fig:iter1-ece}{{4.9}{63}{Iteration~1 Expected Calibration Error per ASR model. Lower is better}{figure.caption.26}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.4}{\ignorespaces FYP-1 Iteration~2 LLM Stage performance on the synthetic 20-sample dataset.}}{63}{table.caption.27}\protected@file@percent }
+\newlabel{tab:iter1-llm-summary}{{4.4}{63}{FYP-1 Iteration~2 LLM Stage performance on the synthetic 20-sample dataset}{table.caption.27}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}Iteration~2 Results: Common Voice Urdu (Read Speech)}{63}{section.4.4}\protected@file@percent }
+\newlabel{sec:results-readspeech}{{4.4}{63}{Iteration~2 Results: Common Voice Urdu (Read Speech)}{section.4.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.10}{\ignorespaces FYP-1 Iteration~2 WER performance by calibration regime and by error type (reproduced from the FYP-1 final report). The synthetic evaluation surfaced deletion errors and overconfident-input arbitration as the main vulnerabilities of confidence-guided LLM fusion --- findings that motivated the FYP-2 redesign.}}{64}{figure.caption.28}\protected@file@percent }
+\newlabel{fig:iter1-llm-perf}{{4.10}{64}{FYP-1 Iteration~2 WER performance by calibration regime and by error type (reproduced from the FYP-1 final report). The synthetic evaluation surfaced deletion errors and overconfident-input arbitration as the main vulnerabilities of confidence-guided LLM fusion --- findings that motivated the FYP-2 redesign}{figure.caption.28}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.1}WER Across Pipeline Stages and Source Models}{64}{subsection.4.4.1}\protected@file@percent }
+\newlabel{ssec:results-wer-grid}{{4.4.1}{64}{WER Across Pipeline Stages and Source Models}{subsection.4.4.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.5}{\ignorespaces WER per source model across the four pipeline categories on the 2{,}995-utterance Common Voice Urdu evaluation set. \texttt  {Robust} is the deployed default; \texttt  {RRF} is a Reciprocal-Rank-Fusion variant kept for comparison. Best per row in bold.}}{64}{table.caption.29}\protected@file@percent }
+\newlabel{tab:eval-wer-grid}{{4.5}{64}{WER per source model across the four pipeline categories on the 2{,}995-utterance Common Voice Urdu evaluation set. \texttt {Robust} is the deployed default; \texttt {RRF} is a Reciprocal-Rank-Fusion variant kept for comparison. Best per row in bold}{table.caption.29}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.2}CER Across Pipeline Stages and Source Models}{64}{subsection.4.4.2}\protected@file@percent }
+\newlabel{ssec:results-cer-grid}{{4.4.2}{64}{CER Across Pipeline Stages and Source Models}{subsection.4.4.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.3}Relative WER Reduction per Source Model}{64}{subsection.4.4.3}\protected@file@percent }
+\newlabel{ssec:relative-improvement}{{4.4.3}{64}{Relative WER Reduction per Source Model}{subsection.4.4.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.11}{\ignorespaces WER across CORAL pipeline stages on Common Voice Urdu. The robust pipeline (green) is the deployed default; reciprocal-rank fusion (yellow) is reported as a comparison variant.}}{65}{figure.caption.30}\protected@file@percent }
+\newlabel{fig:eval-wer-grouped}{{4.11}{65}{WER across CORAL pipeline stages on Common Voice Urdu. The robust pipeline (green) is the deployed default; reciprocal-rank fusion (yellow) is reported as a comparison variant}{figure.caption.30}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.6}{\ignorespaces CER per source model across the four pipeline categories. Best per row in bold.}}{65}{table.caption.31}\protected@file@percent }
+\newlabel{tab:eval-cer-grid}{{4.6}{65}{CER per source model across the four pipeline categories. Best per row in bold}{table.caption.31}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.4}Pipeline Progression and WER--CER Trajectory}{65}{subsection.4.4.4}\protected@file@percent }
+\newlabel{ssec:progression}{{4.4.4}{65}{Pipeline Progression and WER--CER Trajectory}{subsection.4.4.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.12}{\ignorespaces CER across CORAL pipeline stages on Common Voice Urdu.}}{66}{figure.caption.32}\protected@file@percent }
+\newlabel{fig:eval-cer-grouped}{{4.12}{66}{CER across CORAL pipeline stages on Common Voice Urdu}{figure.caption.32}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.5}Split-Merge Alignment Analysis}{66}{subsection.4.4.5}\protected@file@percent }
+\newlabel{ssec:split-merge-analysis}{{4.4.5}{66}{Split-Merge Alignment Analysis}{subsection.4.4.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.7}{\ignorespaces Split-merge metadata distribution (source-side token perspective), 500-utterance sample, 3 companion models.}}{66}{table.caption.36}\protected@file@percent }
+\newlabel{tab:split-merge}{{4.7}{66}{Split-merge metadata distribution (source-side token perspective), 500-utterance sample, 3 companion models}{table.caption.36}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.6}Token Overlap Analysis}{66}{subsection.4.4.6}\protected@file@percent }
+\newlabel{ssec:token-overlap}{{4.4.6}{66}{Token Overlap Analysis}{subsection.4.4.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.13}{\ignorespaces Relative WER reduction from raw output to the robust CORAL pipeline, per ensemble member.}}{67}{figure.caption.33}\protected@file@percent }
+\newlabel{fig:relative-drop}{{4.13}{67}{Relative WER reduction from raw output to the robust CORAL pipeline, per ensemble member}{figure.caption.33}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.8}{\ignorespaces Token overlap of each companion model with Seamless-Large (500-utterance sample).}}{67}{table.caption.38}\protected@file@percent }
+\newlabel{tab:token-overlap}{{4.8}{67}{Token overlap of each companion model with Seamless-Large (500-utterance sample)}{table.caption.38}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.5}Iteration~2 Ablation Study (Conversational Urdu)}{67}{section.4.5}\protected@file@percent }
+\newlabel{sec:ablation}{{4.5}{67}{Iteration~2 Ablation Study (Conversational Urdu)}{section.4.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.1}Ablation Configurations}{67}{subsection.4.5.1}\protected@file@percent }
+\newlabel{ssec:ablation-configs}{{4.5.1}{67}{Ablation Configurations}{subsection.4.5.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.2}Main Ablation Results}{67}{subsection.4.5.2}\protected@file@percent }
+\newlabel{ssec:ablation-results}{{4.5.2}{67}{Main Ablation Results}{subsection.4.5.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.14}{\ignorespaces Pipeline-stage WER progression per source model. The slope from \emph  {Raw output} to \emph  {Robust voting} captures the cumulative gain from normalisation plus ensemble voting.}}{68}{figure.caption.34}\protected@file@percent }
+\newlabel{fig:progression}{{4.14}{68}{Pipeline-stage WER progression per source model. The slope from \emph {Raw output} to \emph {Robust voting} captures the cumulative gain from normalisation plus ensemble voting}{figure.caption.34}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.3}Component-Level Analysis}{68}{subsection.4.5.3}\protected@file@percent }
+\newlabel{ssec:component-analysis}{{4.5.3}{68}{Component-Level Analysis}{subsection.4.5.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Normalisation (C0 $\to $ C1): $-1.9$ WER.}{68}{subsection.4.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Weighted vs.\ Binary Alignment (C2 $\to $ C3): $-0.7$ WER.}{68}{subsection.4.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{OOV Detection vs.\ Correction (C4 $\to $ C5): $-1.5$ WER.}{68}{subsection.4.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.15}{\ignorespaces WER--CER trajectory per source model from \emph  {Raw} (circle) to \emph  {Robust} (star).}}{69}{figure.caption.35}\protected@file@percent }
+\newlabel{fig:wer-cer-scatter}{{4.15}{69}{WER--CER trajectory per source model from \emph {Raw} (circle) to \emph {Robust} (star)}{figure.caption.35}{}}
+\@writefile{toc}{\contentsline {paragraph}{Consensus Voting (C5 $\to $ C6): $-1.1$ WER.}{69}{subsection.4.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{LLM Refinement (C6 $\to $ C7): $-2.5$ WER.}{69}{subsection.4.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.16}{\ignorespaces Split-merge alignment events. SPLIT and MERGE together account for 36.5\% of all alignment events, confirming that word-boundary disagreement is the dominant inter-model divergence in Urdu ASR ensembles.}}{70}{figure.caption.37}\protected@file@percent }
+\newlabel{fig:split-merge-pie}{{4.16}{70}{Split-merge alignment events. SPLIT and MERGE together account for 36.5\% of all alignment events, confirming that word-boundary disagreement is the dominant inter-model divergence in Urdu ASR ensembles}{figure.caption.37}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.4}Ensemble Size Sensitivity}{70}{subsection.4.5.4}\protected@file@percent }
+\newlabel{ssec:ensemble-size}{{4.5.4}{70}{Ensemble Size Sensitivity}{subsection.4.5.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.5}OOV Threshold Sensitivity}{70}{subsection.4.5.5}\protected@file@percent }
+\newlabel{ssec:oov-threshold}{{4.5.5}{70}{OOV Threshold Sensitivity}{subsection.4.5.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.6}Residual Error Analysis}{70}{subsection.4.5.6}\protected@file@percent }
+\newlabel{ssec:residual-errors}{{4.5.6}{70}{Residual Error Analysis}{subsection.4.5.6}{}}
+\citation{koilakuntla2024llm}
+\citation{fiscus1997rover}
+\citation{anon2025speechllm}
+\@writefile{lot}{\contentsline {table}{\numberline {4.9}{\ignorespaces Ablation configurations. Each row adds one component to the previous.}}{71}{table.caption.39}\protected@file@percent }
+\newlabel{tab:ablation-configs}{{4.9}{71}{Ablation configurations. Each row adds one component to the previous}{table.caption.39}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.10}{\ignorespaces WER and CER on the 500-clip Conversational Urdu test set across ablation configurations.}}{71}{table.caption.40}\protected@file@percent }
+\newlabel{tab:ablation-results}{{4.10}{71}{WER and CER on the 500-clip Conversational Urdu test set across ablation configurations}{table.caption.40}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.7}Comparison with Baselines}{71}{subsection.4.5.7}\protected@file@percent }
+\newlabel{ssec:baseline-comparison}{{4.5.7}{71}{Comparison with Baselines}{subsection.4.5.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.17}{\ignorespaces WER across ablation configurations on Conversational Urdu. Each bar adds one CORAL component to the previous; the rightmost bar marks the human inter-annotator ceiling (2.1\%).}}{72}{figure.caption.41}\protected@file@percent }
+\newlabel{fig:ablation}{{4.17}{72}{WER across ablation configurations on Conversational Urdu. Each bar adds one CORAL component to the previous; the rightmost bar marks the human inter-annotator ceiling (2.1\%)}{figure.caption.41}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.11}{\ignorespaces Effect of ensemble size on WER (full CORAL pipeline, C7 configuration).}}{72}{table.caption.42}\protected@file@percent }
+\newlabel{tab:ensemble-size}{{4.11}{72}{Effect of ensemble size on WER (full CORAL pipeline, C7 configuration)}{table.caption.42}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.6}Challenges and Solutions}{72}{section.4.6}\protected@file@percent }
+\newlabel{sec:challenges}{{4.6}{72}{Challenges and Solutions}{section.4.6}{}}
+\@writefile{toc}{\contentsline {paragraph}{Memory constraints.}{72}{section.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Arabic--Urdu Unicode conflation.}{72}{section.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Word-boundary disagreement.}{72}{section.4.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.12}{\ignorespaces WER sensitivity to the OOV frequency threshold $\tau $ (C6 configuration, no LLM).}}{73}{table.caption.43}\protected@file@percent }
+\newlabel{tab:oov-threshold}{{4.12}{73}{WER sensitivity to the OOV frequency threshold $\tau $ (C6 configuration, no LLM)}{table.caption.43}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.13}{\ignorespaces Residual error categorisation in full CORAL output (C7).}}{73}{table.caption.44}\protected@file@percent }
+\newlabel{tab:residual}{{4.13}{73}{Residual error categorisation in full CORAL output (C7)}{table.caption.44}{}}
+\@writefile{toc}{\contentsline {paragraph}{Quality heterogeneity in the ensemble.}{73}{section.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{LLM hallucination risk.}{73}{section.4.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.18}{\ignorespaces Residual error types in the full CORAL output (C7) on the Conversational Urdu test set.}}{74}{figure.caption.45}\protected@file@percent }
+\newlabel{fig:residual}{{4.18}{74}{Residual error types in the full CORAL output (C7) on the Conversational Urdu test set}{figure.caption.45}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.14}{\ignorespaces CORAL vs.\ comparable systems on Conversational Urdu.}}{74}{table.caption.46}\protected@file@percent }
+\newlabel{tab:baseline-compare}{{4.14}{74}{CORAL vs.\ comparable systems on Conversational Urdu}{table.caption.46}{}}
+\@writefile{toc}{\contentsline {paragraph}{LLM API key exposure.}{74}{section.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.7}Summary}{74}{section.4.7}\protected@file@percent }
+\newlabel{sec:ch4-summary}{{4.7}{74}{Summary}{section.4.7}{}}
+\@setckpt{sections/chapter4}{
+\setcounter{page}{76}
+\setcounter{equation}{3}
+\setcounter{enumi}{3}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{0}
+\setcounter{mpfootnote}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{4}
+\setcounter{section}{7}
+\setcounter{subsection}{0}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{18}
+\setcounter{table}{14}
+\setcounter{parentequation}{0}
+\setcounter{lofdepth}{1}
+\setcounter{lotdepth}{1}
+\setcounter{NAT@ctr}{0}
+\setcounter{pp@a@footnote}{4}
+\setcounter{section@level}{0}
+\setcounter{Item}{35}
+\setcounter{Hfootnote}{0}
+\setcounter{bookmark@seq@number}{142}
+\setcounter{AlgoLine}{0}
+\setcounter{algocfline}{2}
+\setcounter{algocfproc}{2}
+\setcounter{algocf}{2}
+\setcounter{LT@tables}{1}
+\setcounter{LT@chunks}{3}
+\setcounter{lstnumber}{11}
+\setcounter{caption@flags}{2}
+\setcounter{continuedfloat}{0}
+\setcounter{float@type}{8}
+\setcounter{lstlisting}{3}
+}

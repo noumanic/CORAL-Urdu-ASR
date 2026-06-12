@@ -1,0 +1,37 @@
+\babel@toc {english}{}\relax 
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {1.1}{\ignorespaces CORAL conceptual architecture as introduced in FYP-1: a two-stage Generate-and-Refine pipeline. The deployed FYP-2 system reorganises this concept into five sequential stages with the LLM repositioned as a refinement layer; the deployed pipeline is shown in Figure~\ref {fig:coral-pipeline}.}}{9}{figure.caption.4}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces The deployed CORAL pipeline (FYP-2). Stages 0--3 are server-side Python (FastAPI). Stage 4 is the LLM refinement layer invoked from the React front-end.}}{34}{figure.caption.6}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces CORAL Level-1 data flow diagram}}{34}{figure.caption.8}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces CORAL detailed end-to-end pipeline}}{35}{figure.caption.7}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Stage 0 normalisation flow}}{37}{figure.caption.9}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Stage 1 alignment process}}{40}{figure.caption.10}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Stage 2 OOV detection and candidate ranking}}{43}{figure.caption.11}%
+\contentsline {figure}{\numberline {3.7}{\ignorespaces BK-tree fuzzy lookup illustration}}{43}{figure.caption.12}%
+\contentsline {figure}{\numberline {3.8}{\ignorespaces Stage 3 voting decision flow}}{45}{figure.caption.13}%
+\contentsline {figure}{\numberline {3.9}{\ignorespaces Stage 4 LLM prompt construction and validation}}{48}{figure.caption.14}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces CORAL four-tier system architecture}}{51}{figure.caption.15}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces CORAL deployment topology}}{52}{figure.caption.16}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces CORAL backend component diagram}}{53}{figure.caption.17}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces CORAL live-speech sequence diagram}}{55}{figure.caption.18}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Registry entry state machine}}{56}{figure.caption.19}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Front-end four-pass workflow state diagram}}{58}{figure.caption.20}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Iteration~1 baseline mean WER per model. Whisper-Large achieves the strongest single-model performance.}}{61}{figure.caption.23}%
+\contentsline {figure}{\numberline {4.8}{\ignorespaces Iteration~1 WER distribution per model (box plots over the 10-utterance test set).}}{62}{figure.caption.24}%
+\contentsline {figure}{\numberline {4.9}{\ignorespaces Iteration~1 Expected Calibration Error per ASR model. Lower is better.}}{63}{figure.caption.26}%
+\contentsline {figure}{\numberline {4.10}{\ignorespaces FYP-1 Iteration~2 WER performance by calibration regime and by error type (reproduced from the FYP-1 final report). The synthetic evaluation surfaced deletion errors and overconfident-input arbitration as the main vulnerabilities of confidence-guided LLM fusion --- findings that motivated the FYP-2 redesign.}}{64}{figure.caption.28}%
+\contentsline {figure}{\numberline {4.11}{\ignorespaces WER across CORAL pipeline stages on Common Voice Urdu. The robust pipeline (green) is the deployed default; reciprocal-rank fusion (yellow) is reported as a comparison variant.}}{65}{figure.caption.30}%
+\contentsline {figure}{\numberline {4.12}{\ignorespaces CER across CORAL pipeline stages on Common Voice Urdu.}}{66}{figure.caption.32}%
+\contentsline {figure}{\numberline {4.13}{\ignorespaces Relative WER reduction from raw output to the robust CORAL pipeline, per ensemble member.}}{67}{figure.caption.33}%
+\contentsline {figure}{\numberline {4.14}{\ignorespaces Pipeline-stage WER progression per source model. The slope from \emph {Raw output} to \emph {Robust voting} captures the cumulative gain from normalisation plus ensemble voting.}}{68}{figure.caption.34}%
+\contentsline {figure}{\numberline {4.15}{\ignorespaces WER--CER trajectory per source model from \emph {Raw} (circle) to \emph {Robust} (star).}}{69}{figure.caption.35}%
+\contentsline {figure}{\numberline {4.16}{\ignorespaces Split-merge alignment events. SPLIT and MERGE together account for 36.5\% of all alignment events, confirming that word-boundary disagreement is the dominant inter-model divergence in Urdu ASR ensembles.}}{70}{figure.caption.37}%
+\contentsline {figure}{\numberline {4.17}{\ignorespaces WER across ablation configurations on Conversational Urdu. Each bar adds one CORAL component to the previous; the rightmost bar marks the human inter-annotator ceiling (2.1\%).}}{72}{figure.caption.41}%
+\contentsline {figure}{\numberline {4.18}{\ignorespaces Residual error types in the full CORAL output (C7) on the Conversational Urdu test set.}}{74}{figure.caption.45}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }

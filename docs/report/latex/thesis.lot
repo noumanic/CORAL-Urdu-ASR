@@ -1,0 +1,26 @@
+\babel@toc {english}{}\relax 
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {1.1}{\ignorespaces Work distribution across the three-member team.}}{15}{table.caption.5}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {2.1}{\ignorespaces Comparative analysis of reviewed research items.}}{27}{table.2.1}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {4.1}{\ignorespaces ASR models in the CORAL read-speech ensemble. Raw-WER computed on the 2{,}995-utterance Common Voice Urdu evaluation set \emph {before} Stage~0 normalisation (\texttt {ensemble\_correction\_eval.tsv}, \texttt {category=untouched}).}}{59}{table.caption.21}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces Iteration~1 baseline WER per model on the 10-utterance read-speech test set.}}{61}{table.caption.22}%
+\contentsline {table}{\numberline {4.3}{\ignorespaces Iteration~1 confidence calibration analysis.}}{62}{table.caption.25}%
+\contentsline {table}{\numberline {4.4}{\ignorespaces FYP-1 Iteration~2 LLM Stage performance on the synthetic 20-sample dataset.}}{63}{table.caption.27}%
+\contentsline {table}{\numberline {4.5}{\ignorespaces WER per source model across the four pipeline categories on the 2{,}995-utterance Common Voice Urdu evaluation set. \texttt {Robust} is the deployed default; \texttt {RRF} is a Reciprocal-Rank-Fusion variant kept for comparison. Best per row in bold.}}{64}{table.caption.29}%
+\contentsline {table}{\numberline {4.6}{\ignorespaces CER per source model across the four pipeline categories. Best per row in bold.}}{65}{table.caption.31}%
+\contentsline {table}{\numberline {4.7}{\ignorespaces Split-merge metadata distribution (source-side token perspective), 500-utterance sample, 3 companion models.}}{66}{table.caption.36}%
+\contentsline {table}{\numberline {4.8}{\ignorespaces Token overlap of each companion model with Seamless-Large (500-utterance sample).}}{67}{table.caption.38}%
+\contentsline {table}{\numberline {4.9}{\ignorespaces Ablation configurations. Each row adds one component to the previous.}}{71}{table.caption.39}%
+\contentsline {table}{\numberline {4.10}{\ignorespaces WER and CER on the 500-clip Conversational Urdu test set across ablation configurations.}}{71}{table.caption.40}%
+\contentsline {table}{\numberline {4.11}{\ignorespaces Effect of ensemble size on WER (full CORAL pipeline, C7 configuration).}}{72}{table.caption.42}%
+\contentsline {table}{\numberline {4.12}{\ignorespaces WER sensitivity to the OOV frequency threshold $\tau $ (C6 configuration, no LLM).}}{73}{table.caption.43}%
+\contentsline {table}{\numberline {4.13}{\ignorespaces Residual error categorisation in full CORAL output (C7).}}{73}{table.caption.44}%
+\contentsline {table}{\numberline {4.14}{\ignorespaces CORAL vs.\ comparable systems on Conversational Urdu.}}{74}{table.caption.46}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {A.1}{\ignorespaces Arabic-to-Urdu character substitutions applied in Stage~0 normalisation.}}{80}{table.caption.47}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }

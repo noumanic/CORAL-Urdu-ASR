@@ -1,0 +1,174 @@
+\documentclass[openany]{fast-nuces-bs}
+
+% -- Core packages ------------------------------------------------------------
+\usepackage{mathptmx}                  % Times Roman font
+\usepackage[T1]{fontenc}
+\usepackage{lipsum}
+\usepackage{sectsty}
+\usepackage{titlesec}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{algorithm2e}[ruled]
+\usepackage{longtable}
+\usepackage{pdflscape}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage[expansion=false]{microtype}
+\usepackage{float}
+\usepackage{placeins}
+
+% --- TikZ for system / architecture / flow diagrams -------------------------
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, shapes.symbols, arrows.meta, positioning,
+                fit, backgrounds, calc, decorations.pathreplacing,
+                decorations.pathmorphing, shadows, patterns, chains, scopes}
+
+% Common colour palette (consistent with the matplotlib evaluation figures).
+\definecolor{coralGreen}{HTML}{0F9D58}
+\definecolor{coralBlue}{HTML}{1976D2}
+\definecolor{coralOrange}{HTML}{E67E22}
+\definecolor{coralRed}{HTML}{C0392B}
+\definecolor{coralGrey}{HTML}{9AA0A6}
+\definecolor{coralTeal}{HTML}{14B8A6}
+\definecolor{coralViolet}{HTML}{6D28D9}
+\definecolor{coralYellow}{HTML}{F4B400}
+\definecolor{coralLightGrey}{HTML}{F1F3F4}
+\definecolor{coralBoxBlue}{HTML}{E3F2FD}
+\definecolor{coralBoxGreen}{HTML}{E8F5E9}
+\definecolor{coralBoxOrange}{HTML}{FFF3E0}
+\definecolor{coralBoxRed}{HTML}{FFEBEE}
+\definecolor{coralBoxViolet}{HTML}{EDE7F6}
+\definecolor{coralBoxYellow}{HTML}{FFF8E1}
+
+% Reusable styles for the diagrams.
+\tikzset{
+  coral/box/.style       = {rounded corners=2pt, draw=coralGrey!70, fill=coralLightGrey,
+                             very thick, align=center, minimum height=8mm,
+                             font=\small\sffamily, inner sep=4pt, drop shadow={opacity=0.10}},
+  coral/stage/.style     = {coral/box, fill=coralBoxBlue,   draw=coralBlue!70,   text=black},
+  coral/data/.style      = {coral/box, fill=coralBoxGreen,  draw=coralGreen!70,  text=black},
+  coral/llm/.style       = {coral/box, fill=coralBoxViolet, draw=coralViolet!70, text=black},
+  coral/api/.style       = {coral/box, fill=coralBoxOrange, draw=coralOrange!80, text=black},
+  coral/ext/.style       = {coral/box, fill=coralBoxYellow, draw=coralYellow!90, text=black},
+  coral/error/.style     = {coral/box, fill=coralBoxRed,    draw=coralRed!70,    text=black},
+  coral/decision/.style  = {diamond, aspect=2, draw=coralOrange!80, fill=coralBoxOrange,
+                             align=center, font=\small\sffamily, very thick, inner sep=2pt},
+  coral/proc/.style      = {ellipse, draw=coralBlue!80, fill=coralBoxBlue, very thick,
+                             align=center, font=\small\sffamily, minimum height=8mm, inner sep=3pt},
+  coral/store/.style     = {draw=coralGreen!80, fill=coralBoxGreen, very thick,
+                             align=center, font=\small\sffamily, minimum height=7mm, inner sep=3pt},
+  coral/entity/.style    = {rectangle, draw=coralYellow!90, fill=coralBoxYellow, very thick,
+                             align=center, font=\small\sffamily, minimum height=8mm, inner sep=4pt},
+  coral/note/.style      = {draw=coralGrey!60, fill=white, align=left, font=\footnotesize\sffamily,
+                             rounded corners=1pt, inner sep=3pt},
+  coral/arrow/.style     = {-{Stealth[length=2.2mm]}, thick, draw=coralGrey!85},
+  coral/arrowg/.style    = {-{Stealth[length=2.2mm]}, thick, draw=coralGreen!75},
+  coral/arrowo/.style    = {-{Stealth[length=2.2mm]}, thick, draw=coralOrange!80},
+  coral/arrowr/.style    = {-{Stealth[length=2.2mm]}, thick, draw=coralRed!80},
+  coral/biarrow/.style   = {{Stealth[length=2.2mm]}-{Stealth[length=2.2mm]}, thick, draw=coralGrey!85},
+  coral/dashed/.style    = {-{Stealth[length=2.2mm]}, thick, draw=coralGrey!85, dashed},
+  coral/title/.style     = {font=\sffamily\bfseries, text=coralBlue!80!black},
+  coral/sublabel/.style  = {font=\footnotesize\sffamily\itshape, text=coralGrey!50!black},
+}
+
+\RestyleAlgo{ruled}
+
+% Loosen line-breaking so long technical strings (e.g. file paths,
+% \texttt{...}) do not produce overfull hboxes.
+\sloppy
+\raggedbottom
+\setlength{\emergencystretch}{6em}
+\tolerance=9999
+\hbadness=10000
+\hfuzz=20pt
+
+% -- Code listing styles -----------------------------------------------------
+\definecolor{codebg}{RGB}{248,248,242}
+\definecolor{codecomment}{RGB}{106,153,85}
+\definecolor{codekeyword}{RGB}{0,0,180}
+\definecolor{codestring}{RGB}{163,21,21}
+\definecolor{codenumber}{RGB}{120,120,120}
+\definecolor{coderule}{RGB}{200,200,210}
+
+\lstdefinestyle{coral}{
+  backgroundcolor=\color{codebg},
+  basicstyle=\footnotesize\ttfamily,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  commentstyle=\itshape\color{codecomment},
+  keywordstyle=\bfseries\color{codekeyword},
+  stringstyle=\color{codestring},
+  numberstyle=\tiny\color{codenumber},
+  numbers=left,
+  numbersep=8pt,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=2,
+  frame=single,
+  rulecolor=\color{coderule},
+  xleftmargin=12pt,
+  framexleftmargin=10pt,
+  aboveskip=8pt,
+  belowskip=8pt,
+}
+\lstset{style=coral}
+
+% -- Project metadata ---------------------------------------------------------
+\department{Department of Computer Science}
+\faculty{Computer Science}
+\degreeyear{2026}
+\degreemonth{May}
+\degreename{Computer Science}
+\campuscity{Islamabad}
+\authorone{Ali Irfan}{21I-2572}
+\authortwo{Nouman Hafeez}{21I-0416}
+\authorthree{Rafay Khattak}{21I-0423}
+\supervisor{Ms.\ Kainat Iqbal}
+\sessionduration{2021--2026}
+\cosupervisor{Ms.\ Saira Qamar}
+\deanname{Dr.\ Dean Computing}
+\directorname{Dr.\ Director of the Campus}
+\hodname{Dr.\ Head of Computer Science Department}
+\fypcoordinatorname{FYP Coordinator}
+\title{CORAL: Consensus-Based Refinement and Output Realignment for Low-Resource Urdu ASR Post-Processing}
+
+% Define abstract / acknowledgements as chapter*-style front matter
+\newenvironment{abstract}
+  {\chapter*{Abstract}\addcontentsline{toc}{chapter}{Abstract}\thispagestyle{plain}}
+  {\par}
+\newenvironment{acknowledgements}
+  {\chapter*{Acknowledgements}\addcontentsline{toc}{chapter}{Acknowledgements}\thispagestyle{plain}}
+  {\par}
+
+\begin{document}
+
+\begin{abstract}
+Urdu, spoken by over 230 million people worldwide and the national language of Pakistan, remains a severely under-resourced language for Automatic Speech Recognition (ASR). Even the strongest publicly available multilingual models exhibit Word Error Rates (WER) above 13\% on read speech and approaching 20\% on conversational audio, limiting deployment in critical domains such as healthcare, education, accessibility, and legal documentation. We present \textbf{CORAL} (\emph{Consensus-Based Refinement / Cross-Model Output Realignment for Low-Resource Urdu ASR Post-Processing}), an inference-time post-processing pipeline that improves Urdu ASR accuracy without retraining any underlying acoustic model. CORAL consists of five stages: (i) Urdu-specific text normalisation that strips diacritics, resolves Arabic--Urdu Unicode conflation, and removes non-Urdu artefacts; (ii) a novel split-merge-aware alignment algorithm that uses weighted word-level Levenshtein distance to align companion-model hypotheses to a designated source transcript while classifying each chunk as SAME, SPLIT, MERGE, or NOISE; (iii) out-of-vocabulary (OOV) detection and correction using BK-tree fuzzy lookup combined with bi/tri-gram language-model candidate ranking over a half-million-word DuckDB corpus; (iv) position-wise majority voting with conservative tie-breaking and OOV substitution; and (v) an LLM-assisted refinement layer for fluency restoration, code-switching recovery, and named-entity handling. We evaluate CORAL on 2{,}995 Mozilla Common Voice Urdu utterances and 500 conversational Urdu clips. Starting from a 19.8\% Whisper-Large-v3 baseline on conversational speech, the full CORAL pipeline reaches 10.6\% WER --- a 46.5\% relative improvement --- and on the read-speech benchmark the robust pipeline reduces WER from 18.4\% to 14.3\% (Seamless-Large source). Our ablation study shows that every component contributes a measurable, additive gain. CORAL is delivered as a deployed FastAPI backend, a Next.js front-end with a four-pass user workflow, Kaggle-GPU notebooks self-registered through an ngrok-tunnelled registry, and an open evaluation framework.
+
+\textbf{Keywords:} Urdu ASR, ensemble post-processing, split-merge alignment, weighted Levenshtein, BK-tree, out-of-vocabulary correction, majority voting, LLM post-processing, low-resource speech recognition.
+\end{abstract}
+
+\begin{acknowledgements}
+We wish to express our deepest gratitude to our project supervisor \textbf{Ms.\ Kainat Iqbal} and co-supervisor \textbf{Ms.\ Saira Qamar} for their continuous guidance, technical insight, and generosity with their time throughout both iterations of this Final Year Project. We are grateful to the Department of Computer Science at FAST-NUCES Islamabad for the computational resources and academic environment that made this work possible. We acknowledge the open-source communities behind \textsc{HuggingFace Transformers}, \textsc{Whisper}, \textsc{SeamlessM4T}, \textsc{Wav2Vec2}, the Mozilla Common Voice corpus, and the Conversational Urdu benchmark, whose publicly available resources formed the foundation of our evaluation infrastructure. Finally, we thank the native Urdu-speaking annotators who produced and verified the ground-truth transcriptions used in the ablation study.
+\end{acknowledgements}
+
+\include{sections/chapter1}
+\include{sections/chapter2}
+\include{sections/chapter3}
+\include{sections/chapter4}
+\include{sections/conclusions}
+
+\appendix
+\include{sections/appendix1}
+
+\bibliographystyle{plain}
+\bibliography{bib}
+\addcontentsline{toc}{chapter}{References}
+
+\end{document}

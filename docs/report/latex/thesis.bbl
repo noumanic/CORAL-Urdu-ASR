@@ -1,0 +1,107 @@
+\begin{thebibliography}{10}
+
+\bibitem{anon2025speechllm}
+{Anonymous}.
+\newblock Better pseudo-labeling with multi-{ASR} fusion and error correction
+  by {SpeechLLM}.
+\newblock {\em arXiv preprint arXiv:2506.11089}, 2025.
+
+\bibitem{ardila2020common}
+Rosana Ardila et~al.
+\newblock Common voice: A massively-multilingual speech corpus.
+\newblock In {\em Proceedings of the 12th Conference on Language Resources and
+  Evaluation (LREC)}, pages 4211--4215, 2020.
+
+\bibitem{arif2024wer}
+Samee Arif, Aamir~Junaid Khan, Mansoor Abbas, Agha~Ali Raza, and Awais Athar.
+\newblock {WER} we stand: Benchmarking {Urdu} {ASR} models.
+\newblock In {\em Proceedings of the 31st International Conference on
+  Computational Linguistics (COLING)}, pages 5952--5961, 2025.
+
+\bibitem{burkhard1973bk}
+Walter~A. Burkhard and Robert~M. Keller.
+\newblock Some approaches to best-match file searching.
+\newblock {\em Communications of the ACM}, 16(4):230--236, 1973.
+
+\bibitem{feng2024low}
+Wei Feng et~al.
+\newblock Low-resource language adaptation with ensemble of {PEFT} approaches.
+\newblock In {\em Proceedings of APSIPA ASC}, 2024.
+
+\bibitem{fiscus1997rover}
+Jonathan~G. Fiscus.
+\newblock A post-processing system to yield reduced word error rates:
+  Recognizer output voting error reduction ({ROVER}).
+\newblock In {\em Proceedings of the IEEE Workshop on Automatic Speech
+  Recognition and Understanding (ASRU)}, pages 347--354, 1997.
+
+\bibitem{gitman2023confidence}
+Igor Gitman et~al.
+\newblock Confidence-based ensembles of end-to-end speech recognition models.
+\newblock In {\em Proceedings of Interspeech}, 2023.
+
+\bibitem{hori2025delayed}
+Takaaki Hori et~al.
+\newblock Delayed fusion: Integrating large language models into first-pass
+  decoding in end-to-end speech recognition.
+\newblock {\em arXiv preprint arXiv:2501.09258}, 2025.
+
+\bibitem{koilakuntla2024llm}
+M.~Koilakuntla et~al.
+\newblock {LLM}-based {ASR} error correction for contact center domain-specific
+  terminology.
+\newblock In {\em Proceedings of ICASSP}, 2024.
+
+\bibitem{ma2024asr}
+Rao Ma, Mengjie Qian, Mark Gales, and Kate Knill.
+\newblock {ASR} error correction using large language models.
+\newblock {\em arXiv preprint arXiv:2409.09554}, 2024.
+
+\bibitem{trucles2025}
+C.~Nagarathna et~al.
+\newblock {TruCLeS}: True class lexical similarity score for novel confidence
+  estimation in {ASR}.
+\newblock {\em IEEE Transactions on Audio, Speech, and Language Processing},
+  2025.
+
+\bibitem{naqvi2024code}
+S.~A. Naqvi and M.~A. Tahir.
+\newblock Code-mixed {Urdu}--{English} {ASR} for navigation domain using hybrid
+  architecture.
+\newblock {\em Journal of Natural Language Processing}, 2024.
+
+\bibitem{parikh2024hybrid}
+N.~Parikh et~al.
+\newblock Hybrid-{E2E} {ASR} ensemble with confidence calibration for
+  low-resource irish language.
+\newblock In {\em Proceedings of LREC--COLING}, 2024.
+
+\bibitem{prakash2025multi}
+A.~Prakash et~al.
+\newblock Multi-{ASR} fusion with {LLM}-based post-editing for high-quality
+  pseudo-labels.
+\newblock In {\em Proceedings of Interspeech}, 2025.
+
+\bibitem{pratap2023mms}
+Vineel Pratap et~al.
+\newblock Scaling speech technology to 1{,}000+ languages.
+\newblock {\em arXiv preprint arXiv:2305.13516}, 2023.
+
+\bibitem{radford2022whisper}
+Alec Radford, Jong~Wook Kim, Tao Xu, Greg Brockman, Christine McLeavey, and
+  Ilya Sutskever.
+\newblock Robust speech recognition via large-scale weak supervision.
+\newblock {\em arXiv preprint arXiv:2212.04356}, 2022.
+
+\bibitem{renduchintala2018mmda}
+Adithya Renduchintala, Shuoyang Ding, Matthew Wiesner, and Shinji Watanabe.
+\newblock Multi-modal data augmentation for end-to-end {ASR}.
+\newblock {\em arXiv preprint arXiv:1803.10299}, 2018.
+
+\bibitem{seamlessm4t2023}
+{Seamless Communication}.
+\newblock {SeamlessM4T}: Massively multilingual and multimodal machine
+  translation.
+\newblock {\em arXiv preprint arXiv:2308.11596}, 2023.
+
+\end{thebibliography}
