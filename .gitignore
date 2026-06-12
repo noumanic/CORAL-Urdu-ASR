@@ -16,5 +16,6 @@ coral_app/backend/.env
 # Audio files
 audios/
 
-# LaTeX build folder (sources + intermediate artefacts)
-docs/report/latex/
+
+# docs research paper
+docs/research_paper/
